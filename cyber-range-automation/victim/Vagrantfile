@@ -7,7 +7,9 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell", path: "provision.sh"
 
   config.vm.provider "virtualbox" do |vb|
-    vb.gui = true
+    vb.gui = false
     vb.memory = 2048  # Allocate more memory for GUI
+    vb.cpus = 2           # Optional: Increase CPU
+
   end
 end
