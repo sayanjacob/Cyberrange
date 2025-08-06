@@ -3,6 +3,7 @@ const { exec, spawn } = require('child_process');
 const http = require('http');
 const fs = require('fs');
 const WebSocket = require('ws');
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
