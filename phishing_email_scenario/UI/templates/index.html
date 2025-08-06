@@ -1,13 +1,34 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Cyber Range Dashboard</title>
+    <meta charset="UTF-8">
+    <title>Cyber Range Control Panel</title>
 </head>
 <body>
-  <h1>🛡️ Cyber Range - Demo Scenario</h1>
-  <p><strong>Scenario:</strong> Phishing Email</p>
-  <button onclick="location.href='/start'">Start Scenario</button>
-  <button onclick="location.href='/stop'">Stop Scenario</button>
-  <button onclick="location.href='/guide'">View Guide</button>
+    <h1>Cyber Range Demo</h1>
+
+    <button onclick="fetch('/start')">Start Environment</button>
+    <button onclick="fetch('/stop')">Stop Environment</button>
+    <button onclick="window.location.href='/guide'">View Guide</button>
+
+    <h2>Live Logs</h2>
+    <pre id="logs" style="background: #f4f4f4; padding: 10px; border: 1px solid #ccc; height: 300px; overflow-y: scroll;"></pre>
+
+    <script>
+        const logBox = document.getElementById("logs");
+
+        // Connect to log stream
+        const eventSource = new EventSource("/logs");
+
+        eventSource.onmessage = function(event) {
+            logBox.textContent += event.data + "\n";
+            logBox.scrollTop = logBox.scrollHeight;
+        };
+
+        eventSource.onerror = function(event) {
+            logBox.textContent += "[Error: Log stream disconnected]\n";
+            eventSource.close();
+        };
+    </script>
 </body>
 </html>
