@@ -17,36 +17,7 @@ vagrant_lock = threading.Lock()
 def index():
     return render_template("index.html")
 
-def run_vagrant_command(command):
-    with open(LOG_FILE, "w") as log_file:
-        process = subprocess.Popen(
-            command,
-            cwd=BASE_DIR,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            bufsize=1,
-            universal_newlines=True
-        )
-        for line in process.stdout:
-            log_file.write(line)
-            log_file.flush()
-        process.wait()
 
-@app.route("/start")
-def start():
-    if not vagrant_lock.acquire(blocking=False):
-        return "<pre>Vagrant is already starting. Please wait...</pre>", 429
-
-    try:
-        threading.Thread(target=run_vagrant_command, args=(["vagrant", "up"],), daemon=True).start()
-        return redirect("/")
-    finally:
-        vagrant_lock.release()
-
-@app.route("/stop")
-def stop():
-    threading.Thread(target=run_vagrant_command, args=(["vagrant", "halt"],), daemon=True).start()
-    return redirect("/")
 
 @app.route("/guide")
 def guide():
@@ -74,6 +45,41 @@ def stream_logs():
                 else:
                     time.sleep(0.5)
     return Response(generate_logs(), mimetype="text/event-stream")
+
+@app.route("/stream-vagrant-output")
+def stream_vagrant_output():
+    command = request.args.get("command", "up")  # Default to "up"
+    if command not in ["up", "halt"]:
+        return Response("Invalid command", mimetype="text/plain")
+
+    def generate_output():
+        process = subprocess.Popen(
+            ["vagrant", command],
+            cwd=BASE_DIR,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            bufsize=1,
+            universal_newlines=True,
+        )
+        for line in process.stdout:
+            yield f"data: {line.strip()}\n\n"
+        process.wait()
+
+    return Response(generate_output(), mimetype="text/event-stream")
+
+@app.route("/vagrant-status")
+def vagrant_status():
+    try:
+        result = subprocess.run(
+            ["vagrant", "status"],
+            cwd=BASE_DIR,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return Response(result.stdout, mimetype="text/plain")
+    except subprocess.CalledProcessError as e:
+        return Response(e.stdout, mimetype="text/plain", status=500)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, threaded=True)
