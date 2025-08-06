@@ -3,7 +3,7 @@ Vagrant.configure("2") do |config|
   config.vm.hostname = "victim"
 
   # Static private IP for local LAN access
-  config.vm.network "private_network", ip: "192.168.56.6"
+  config.vm.network "public_network", ip: "192.168.1.6", bridge: "wlp2s0" # ← Replace with your real interface
   # Port forwarding for GUI access (noVNC)
   config.vm.network "forwarded_port", guest: 6080, host: 6080
   config.vm.network "forwarded_port", guest: 5901, host: 5901
