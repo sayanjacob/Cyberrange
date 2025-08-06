@@ -17,38 +17,40 @@
         </div>
 
         <div class="row">
-            <div class="col-md-6 mb-4">
+            <div class="col-md-4 mb-4">
                 <h2 class="h5">Live Logs</h2>
                 <pre id="logs" class="bg-white border rounded p-2" style="height: 300px; overflow-y: scroll;"></pre>
             </div>
-            <div class="col-md-6 mb-4">
+            <div class="col-md-4 mb-4">
                 <h2 class="h5">Live Vagrant Logs</h2>
                 <pre id="log-output" class="bg-white border rounded p-2" style="height: 300px; overflow-y: scroll;"></pre>
+            </div>
+            <div class="col-md-4 mb-4">
+                <h2 class="h5">Linux Terminal Output</h2>
+                <pre id="terminal-output" class="bg-dark text-success border rounded p-2" style="height: 300px; overflow-y: scroll; font-family: 'Fira Mono', 'Consolas', monospace;"></pre>
             </div>
         </div>
     </div>
 
     <script>
         const logBox = document.getElementById("logs");
+        const logOutput = document.getElementById('log-output');
+        const terminalOutput = document.getElementById('terminal-output');
 
         // Connect to log stream
         const eventSource = new EventSource("/logs");
-
         eventSource.onmessage = function(event) {
             logBox.textContent += event.data + "\n";
             logBox.scrollTop = logBox.scrollHeight;
+            logOutput.textContent += event.data + "\n";
+            logOutput.scrollTop = logOutput.scrollHeight;
+            // Show all logs in terminal output
+            terminalOutput.textContent += event.data + "\n";
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
         };
-
         eventSource.onerror = function(event) {
             logBox.textContent += "[Error: Log stream disconnected]\n";
             eventSource.close();
-        };
-
-        const logOutput = document.getElementById('log-output');
-        const eventSourceVagrant = new EventSource('/logs');
-        eventSourceVagrant.onmessage = function(e) {
-            logOutput.textContent += e.data + '\n';
-            logOutput.scrollTop = logOutput.scrollHeight;
         };
     </script>
 </body>

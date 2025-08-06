@@ -70,6 +70,7 @@ def stream_logs():
             while True:
                 line = f.readline()
                 if line:
+                    print(line.strip())  # Show logs on the server terminal
                     yield f"data: {line.strip()}\n\n"
                 else:
                     time.sleep(0.5)
