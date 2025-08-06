@@ -17,34 +17,35 @@ vagrant_lock = threading.Lock()
 def index():
     return render_template("index.html")
 
+def run_vagrant_command(command):
+    with open(LOG_FILE, "w") as log_file:
+        process = subprocess.Popen(
+            command,
+            cwd=BASE_DIR,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            bufsize=1,
+            universal_newlines=True
+        )
+        for line in process.stdout:
+            log_file.write(line)
+            log_file.flush()
+        process.wait()
+
 @app.route("/start")
 def start():
     if not vagrant_lock.acquire(blocking=False):
         return "<pre>Vagrant is already starting. Please wait...</pre>", 429
 
     try:
-        # Clear previous logs
-        with open(LOG_FILE, "w") as log_file:
-            # Start vagrant up and pipe logs to file
-            subprocess.Popen(
-                ["vagrant", "up"],
-                cwd=BASE_DIR,
-                stdout=log_file,
-                stderr=log_file
-            )
+        threading.Thread(target=run_vagrant_command, args=(["vagrant", "up"],), daemon=True).start()
         return redirect("/")
     finally:
         vagrant_lock.release()
 
 @app.route("/stop")
 def stop():
-    with open(LOG_FILE, "a") as log_file:
-        subprocess.Popen(
-            ["vagrant", "halt"],
-            cwd=BASE_DIR,
-            stdout=log_file,
-            stderr=log_file
-        )
+    threading.Thread(target=run_vagrant_command, args=(["vagrant", "halt"],), daemon=True).start()
     return redirect("/")
 
 @app.route("/guide")
@@ -60,21 +61,18 @@ def guide():
 @app.route("/logs")
 def stream_logs():
     def generate_logs():
-        # Ensure the log file exists
         if not os.path.exists(LOG_FILE):
             open(LOG_FILE, "w").close()
 
         with open(LOG_FILE, "r") as f:
-            f.seek(0, os.SEEK_END)  # Move to the end
-
+            f.seek(0, os.SEEK_END)
             while True:
                 line = f.readline()
                 if line:
-                    print(line.strip())  # Show logs on the server terminal
+                    print(line.strip())
                     yield f"data: {line.strip()}\n\n"
                 else:
                     time.sleep(0.5)
-
     return Response(generate_logs(), mimetype="text/event-stream")
 
 if __name__ == "__main__":

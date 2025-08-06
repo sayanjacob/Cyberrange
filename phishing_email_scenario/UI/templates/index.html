@@ -34,19 +34,12 @@
 
     <script>
         const logBox = document.getElementById("logs");
-        const logOutput = document.getElementById('log-output');
-        const terminalOutput = document.getElementById('terminal-output');
 
         // Connect to log stream
         const eventSource = new EventSource("/logs");
         eventSource.onmessage = function(event) {
             logBox.textContent += event.data + "\n";
             logBox.scrollTop = logBox.scrollHeight;
-            logOutput.textContent += event.data + "\n";
-            logOutput.scrollTop = logOutput.scrollHeight;
-            // Show all logs in terminal output
-            terminalOutput.textContent += event.data + "\n";
-            terminalOutput.scrollTop = terminalOutput.scrollHeight;
         };
         eventSource.onerror = function(event) {
             logBox.textContent += "[Error: Log stream disconnected]\n";
