@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cyber Range Dashboard</title>
+</head>
+<body>
+  <h1>🛡️ Cyber Range Simulation</h1>
+  <button onclick="startScenario()">▶️ Start Scenario</button>
+  <button onclick="stopScenario()">⏹️ Stop Scenario</button>
+  <button onclick="viewLog()">📄 View Attacker Log</button>
+  <p id="victim-status">Victim Status: Unknown</p>
+  <pre id="log-output"></pre>
+
+  <script>
+    async function startScenario() {
+      const res = await fetch('/start');
+      document.getElementById('log-output').innerText = await res.text();
+    }
+
+    async function stopScenario() {
+      const res = await fetch('/stop');
+      document.getElementById('log-output').innerText = await res.text();
+    }
+
+    async function viewLog() {
+      const res = await fetch('/log');
+      document.getElementById('log-output').innerText = await res.text();
+    }
+  </script>
+</body>
+</html>
