@@ -1,0 +1,15 @@
+Vagrant.configure("2") do |config|
+  config.vm.define "victim" do |victim|
+    victim.vm.box = "ubuntu/focal64"
+    victim.vm.hostname = "victim"
+    victim.vm.network "private_network", ip: "192.168.56.10"
+    victim.vm.provision "shell", path: "victim/provision.sh"
+  end
+
+  config.vm.define "attacker" do |attacker|
+    attacker.vm.box = "kalilinux/rolling"
+    attacker.vm.hostname = "attacker"
+    attacker.vm.network "private_network", ip: "192.168.56.11"
+    attacker.vm.provision "shell", path: "attacker/provision.sh"
+  end
+end
