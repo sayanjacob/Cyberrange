@@ -1,14 +1,22 @@
 #!/bin/bash
-sudo apt update && sudo apt install -y mailutils curl wget net-tools
-echo "From: admin@example.com
-To: victim@example.com
-Subject: Urgent Invoice
+sudo apt-get update
+sudo apt-get install -y mailutils
 
-Please download your invoice: http://192.168.56.11/malicious_link.html
+# Create a fake email
+echo "From: billing@megacorp.com
+To: user@example.com
+Subject: Urgent: Unpaid Invoice
 
-Thanks" > /tmp/email.txt
+Dear User,
 
-sudo cp /tmp/email.txt /var/mail/vagrant
-echo "Email sent to victim's mailbox.""
-echo "This script sets up a phishing email scenario. Ensure to run it on the attacker machine
-and replace the IP address with the actual attacker machine's IP."
+Please find attached your unpaid invoice. Failure to settle this immediately may result in service suspension.
+
+http://192.168.56.11/malicious_link.html
+
+Sincerely,
+
+MegaCorp Billing" > /tmp/phishing_email.txt
+
+# Deliver the email to the vagrant user
+sudo mv /tmp/phishing_email.txt /var/mail/vagrant
+sudo chown vagrant:mail /var/mail/vagrant
