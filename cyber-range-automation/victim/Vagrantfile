@@ -1,24 +1,17 @@
 Vagrant.configure("2") do |config|
-  # Ubuntu Desktop LTS (GUI ready)
-  config.vm.box = "generic/ubuntu2204" # or "ubuntu/ubuntu-22.04-desktop-amd64" if available
+  config.vm.box = "generic/ubuntu2204"
   config.vm.hostname = "victim"
 
-  # Private IP for internal access
+  # Static private IP for local LAN access
   config.vm.network "private_network", ip: "192.168.1.6"
 
-  # Port forwarding for VNC / Guacamole if needed
+  # Port forwarding for GUI access (noVNC)
+  config.vm.network "forwarded_port", guest: 6080, host: 6080
   config.vm.network "forwarded_port", guest: 5901, host: 5901
   config.vm.network "forwarded_port", guest: 22, host: 2222
 
-  # Provision GUI and VNC
-  config.vm.provision "shell", inline: <<-SHELL
-    sudo apt update
-    sudo apt install -y x11vnc xfce4 xfce4-goodies tightvncserver
-    mkdir -p ~/.vnc
-    echo "password" | vncpasswd -f > ~/.vnc/passwd
-    chmod 600 ~/.vnc/passwd
-    x11vnc -storepasswd password ~/.vnc/passwd
-  SHELL
+  # Use external shell script for provisioning
+  config.vm.provision "shell", path: "provision.sh"
 
   config.vm.provider "virtualbox" do |vb|
     vb.gui = false
