@@ -8,7 +8,7 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-const LOG_PATH = '/home/vagrant/http.log'; // or relative 'logs/http.log'
+const logPath = path.join(__dirname, 'logs', 'http.log'); // This reads logs/http.log relative to your project root
 
 app.use(express.static('frontend'));
 
@@ -28,7 +28,7 @@ app.get('/stop', (req, res) => {
 
 // WebSocket: stream log lines in real time
 wss.on('connection', (ws) => {
-  const tail = spawn('tail', ['-f', LOG_PATH]);
+  const tail = spawn('tail', ['-f', logPath]);
 
   tail.stdout.on('data', (data) => {
     ws.send(data.toString());
@@ -44,5 +44,5 @@ wss.on('connection', (ws) => {
 });
 
 server.listen(3000, () => {
-  console.log('Cyber Range UI + WS at http://localhost:3000');
+  console.log('Cyber Range UI + WS at port 3000');
 });
