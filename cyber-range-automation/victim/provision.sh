@@ -7,7 +7,7 @@ echo "🔄 Updating system..."
 apt-get update && apt-get upgrade -y
 
 echo "📦 Installing GUI, VNC Server, and Web VNC Client..."
-DEBIAN_FRONTEND=noninteractive apt-get install -y xfce4 xfce4-goodies tightvncserver x11vnc novnc websockify
+DEBIAN_FRONTEND=noninteractive apt-get install -y xfce4 xfce4-goodies tightvncserver x11vnc novnc websockify firefox
 
 # Setup VNC password for user 'vagrant'
 echo "🔐 Setting VNC password for vagrant..."
@@ -76,6 +76,47 @@ if command -v ufw &> /dev/null && ufw status | grep -q "Status: active"; then
   echo "🌐 Allowing port 6080 through UFW..."
   ufw allow 6080
 fi
+echo "🔧 Configuring Firefox..."
+# Create phishing email HTML
+mkdir -p /home/vagrant/PhishingEmailDemo
+
+cat <<EOF > /home/vagrant/PhishingEmailDemo/inbox.html
+<!DOCTYPE html>
+<html>
+<head><title>Inbox</title></head>
+<body>
+  <h2>Inbox</h2>
+  <hr>
+  <p><strong>From:</strong> admin@fakebank.com</p>
+  <p><strong>Subject:</strong> Urgent: Invoice Due</p>
+  <p>
+    Dear user,<br><br>
+    Please review the attached invoice.<br>
+    <a href="http://192.168.56.10/malicious_page.html" target="_blank">Click here to view invoice</a><br><br>
+    Regards,<br>
+    Accounts Team
+  </p>
+</body>
+</html>
+EOF
+
+# Make vagrant user own it
+chown -R vagrant:vagrant /home/vagrant/PhishingEmailDemo
+
+# Add Firefox to autostart with inbox.html (optional)
+mkdir -p /home/vagrant/.config/autostart
+
+cat <<EOF > /home/vagrant/.config/autostart/inbox.desktop
+[Desktop Entry]
+Type=Application
+Exec=firefox /home/vagrant/PhishingEmailDemo/inbox.html
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name=Inbox Email
+EOF
+
+chown -R vagrant:vagrant /home/vagrant/.config/autostart
 
 echo "✅ Setup complete!"
 echo "👉 Access the VM GUI at: http://192.168.1.6:6080/vnc.html"
