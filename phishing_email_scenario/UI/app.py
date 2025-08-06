@@ -1,7 +1,9 @@
 from flask import Flask, render_template, request, redirect
 import subprocess
+import os
 
 app = Flask(__name__)
+scenario_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 @app.route("/")
 def index():
@@ -9,12 +11,12 @@ def index():
 
 @app.route("/start")
 def start():
-    subprocess.Popen(["vagrant", "up"], cwd="phishing_email_scenario")
+    subprocess.Popen(["vagrant", "up"], cwd=scenario_path)
     return redirect("/")
 
 @app.route("/stop")
 def stop():
-    subprocess.Popen(["vagrant", "halt"], cwd="phishing_email_scenario")
+    subprocess.Popen(["vagrant", "halt"], cwd=scenario_path)
     return redirect("/")
 
 @app.route("/guide")
