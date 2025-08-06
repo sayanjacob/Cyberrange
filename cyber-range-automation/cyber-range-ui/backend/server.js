@@ -11,7 +11,7 @@ const wss = new WebSocket.Server({ server });
 
 const logPath = path.join(__dirname, 'logs', 'http.log'); // This reads logs/http.log relative to your project root
 
-app.use(express.static('frontend'));
+app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
 // Start scenario
 app.get('/start', (req, res) => {

@@ -29,15 +29,18 @@ chmod +x /home/vagrant/.vnc/xstartup
 echo "⚙️ Creating systemd service for VNC Server..."
 cat << EOF > /etc/systemd/system/vncserver@.service
 [Unit]
-Description=Start TightVNC server at startup
+Description=Start TightVNC server at startup for user vagrant on display :%i
 After=syslog.target network.target
 
 [Service]
 Type=forking
-User=%i
+User=vagrant
+Group=vagrant
+WorkingDirectory=/home/vagrant
 PAMName=login
-PIDFile=/home/%i/.vnc/%H:%i.pid
+PIDFile=/home/vagrant/.vnc/%H:%i.pid
 ExecStartPre=-/usr/bin/vncserver -kill :%i > /dev/null 2>&1
+ExecStartPre=-/bin/rm -f /tmp/.X%i-lock /tmp/.X11-unix/X%i
 ExecStart=/usr/bin/vncserver -depth 24 -geometry 1280x800 :%i
 ExecStop=/usr/bin/vncserver -kill :%i
 
@@ -48,6 +51,7 @@ EOF
 echo "✅ Enabling VNC service for display :1..."
 systemctl daemon-reload
 systemctl enable vncserver@1.service
+systemctl restart vncserver@1.service # Restart to apply changes immediately
 
 # --- noVNC Setup ---
 echo "🌐 Creating systemd service for noVNC..."
@@ -68,7 +72,7 @@ EOF
 echo "✅ Enabling and starting noVNC service..."
 systemctl daemon-reload
 systemctl enable novnc.service
-systemctl start novnc.service
+systemctl restart novnc.service # Restart to apply changes immediately
 
 echo "🌐 Configuring firewall (if ufw is active)..."
 if command -v ufw &> /dev/null && ufw status | grep -q "Status: active"; then
