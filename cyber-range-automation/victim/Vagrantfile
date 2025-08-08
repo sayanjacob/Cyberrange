@@ -18,7 +18,7 @@ Vagrant.configure("2") do |config|
     victim.vm.network "forwarded_port", guest: 3389, host: 3389, auto_correct: true
 
     victim.vm.provider "virtualbox" do |vb|
-      vb.gui = true  # Set to true to view the Windows UI (recommended for debugging)
+      vb.gui = false  # Set to true to view the Windows UI (recommended for debugging)
       vb.memory = 4096
       vb.cpus = 2
     end
