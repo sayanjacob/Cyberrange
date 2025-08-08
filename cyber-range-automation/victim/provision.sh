@@ -3,11 +3,32 @@
 set -e
 set -u
 
-echo "🔄 Updating system..."
+e#!/bin/bash
+
+echo "🌀 Updating system..."
 apt-get update && apt-get upgrade -y
 
-echo "📦 Installing GUI, VNC Server, and Web VNC Client..."
-DEBIAN_FRONTEND=noninteractive apt-get install -y xfce4 xfce4-goodies tightvncserver x11vnc novnc websockify firefox
+echo "🧠 Installing Xubuntu Desktop (XFCE)..."
+DEBIAN_FRONTEND=noninteractive apt-get install -y xubuntu-desktop lightdm
+
+echo "🌐 Replacing Snap Firefox with .deb version..."
+add-apt-repository ppa:mozillateam/ppa -y
+apt-get update
+
+# Pin to ensure apt uses .deb not Snap version
+cat <<EOF > /etc/apt/preferences.d/mozilla-firefox
+Package: firefox*
+Pin: release o=LP-PPA-mozillateam
+Pin-Priority: 1001
+EOF
+
+apt-get remove -y firefox
+apt-get install -y firefox
+
+echo "📡 Installing VNC and noVNC dependencies..."
+apt-get install -y tightvncserver x11vnc novnc websockify
+
+echo "🔧 Configuring VNC server..."
 
 echo "🔐 Setting VNC password for vagrant..."
 sudo -u vagrant mkdir -p /home/vagrant/.vnc
