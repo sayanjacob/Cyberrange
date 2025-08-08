@@ -9,11 +9,9 @@ apt-get update && apt-get upgrade -y
 echo "📦 Installing GUI, VNC Server, and Web VNC Client..."
 DEBIAN_FRONTEND=noninteractive apt-get install -y xfce4 xfce4-goodies tightvncserver x11vnc novnc websockify firefox
 
-# Setup VNC password for user 'vagrant'
 echo "🔐 Setting VNC password for vagrant..."
 sudo -u vagrant mkdir -p /home/vagrant/.vnc
-echo "vagrant" | vncpasswd -f > /home/vagrant/.vnc/passwd
-chown vagrant:vagrant /home/vagrant/.vnc/passwd
+sudo -u vagrant bash -c "echo 'vagrant' | vncpasswd -f > /home/vagrant/.vnc/passwd"
 chmod 600 /home/vagrant/.vnc/passwd
 
 # VNC startup script
