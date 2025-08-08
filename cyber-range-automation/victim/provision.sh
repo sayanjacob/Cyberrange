@@ -3,8 +3,6 @@
 set -e
 set -u
 
-e#!/bin/bash
-
 echo "🌀 Updating system..."
 apt-get update && apt-get upgrade -y
 
@@ -138,5 +136,5 @@ EOF
 chown -R vagrant:vagrant /home/vagrant/.config/autostart
 
 echo "✅ Setup complete!"
-echo "👉 Access the VM GUI at: http://192.168.1.6:6080/vnc.html"
+echo "👉 Access the VM GUI at: http://<ip>:6081/vnc.html"
 echo "🔐 VNC Password: vagrant"
