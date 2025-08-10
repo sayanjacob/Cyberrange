@@ -1,0 +1,60 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: guac-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+    volumes:
+      - guac-mysql-data:/var/lib/mysql
+    networks:
+      - guacnet
+
+  guacd:
+    image: guacamole/guacd
+    container_name: guacd
+    restart: unless-stopped
+    networks:
+      - guacnet
+
+  guacamole:
+    image: guacamole/guacamole
+    container_name: guacamole
+    restart: unless-stopped
+    depends_on:
+      - guacd
+      - mysql
+    environment:
+      MYSQL_HOSTNAME: mysql
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      GUACD_HOSTNAME: guacd
+      GUACD_PORT: 4822
+    ports:
+      - "8080:8080"
+    networks:
+      - guacnet
+
+  kali:
+    build:
+      context: ./kali
+      dockerfile: Dockerfile
+    container_name: kali
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    networks:
+      - guacnet
+
+volumes:
+  guac-mysql-data:
+
+networks:
+  guacnet:
+    driver: bridge

@@ -1,0 +1,29 @@
+<div class="container-fluid m-0 p-4 text-light bg-dark min-vh-100" *ngIf="scenario">
+  <!-- Scenario Title -->
+  <div class="mb-5">
+    <h1 class="display-4 fw-bold">{{ scenario.title }}</h1>
+    <p class="lead text-muted">{{ scenario.description }}</p>
+  </div>
+
+  <!-- Steps -->
+  <div class="row g-4">
+    <div class="col-12">
+      <div class="card bg-dark border-secondary shadow-lg rounded-4">
+        <div class="card-body">
+          <h5 class="card-title fw-bold mb-3">Steps</h5>
+          <ul class="list-group list-group-flush">
+            <li *ngFor="let step of scenario.steps" class="list-group-item bg-dark text-light border-secondary">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" [(ngModel)]="step.completed" [id]="'step' + step.id">
+                <label class="form-check-label" [for]="'step' + step.id">
+                  {{ step.title }}
+                </label>
+                <p class="small text-muted">{{ step.description }}</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
