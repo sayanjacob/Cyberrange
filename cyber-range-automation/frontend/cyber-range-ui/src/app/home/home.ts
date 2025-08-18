@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { ScenarioService } from '../scenario.service';
 
 export interface Scenario {
   id: string;
@@ -36,14 +37,17 @@ export class Home implements OnInit {
 
   scenarios: Scenario[] = [];
 
-  constructor(private router: Router) {
+  constructor(private router: Router,
+    private scenarioService: ScenarioService) {
     console.log('🔧 Home Component Constructor');
     this.initializeScenarios();
   }
 
-  ngOnInit(): void {
+
+  async ngOnInit(): Promise<void> {
     console.log('🚀 Home Component OnInit - Scenarios:', this.scenarios.length);
-    
+    const status = await this.scenarioService.getStatus();
+    console.log('🔄 Status fetched:', status);
     // Safety check
     if (!this.scenarios || this.scenarios.length === 0) {
       console.log('⚠️ No scenarios found, reinitializing...');
@@ -52,97 +56,7 @@ export class Home implements OnInit {
   }
 
   private initializeScenarios(): void {
-    this.scenarios = [
-      {
-        id: 'apt28-part1',
-        title: 'APT28: Link to Trouble - Part 1',
-        description: 'Here at TryGovMe, our partners have been consistently targeted by APT28 over the past few weeks and we are now under pressure to investigate.',
-        time: 15,
-        difficulty: 'Easy',
-        locked: false,
-        category: 'Network Security',
-        stars: 3,
-        completedBy: 1250
-      },
-      {
-        id: 'apt28-part2',
-        title: 'APT28: Link to Trouble - Part 2',
-        description: 'Our worst fears have been confirmed. We have discovered that TryGovMe has also been compromised by APT28. It is time to investigate.',
-        time: 15,
-        difficulty: 'Easy',
-        locked: false,
-        category: 'Network Security',
-        stars: 3,
-        completedBy: 980
-      },
-      {
-        id: 'apt28-part3',
-        title: 'APT28: Link to Trouble - Part 3',
-        description: 'Our team has determined that the attacker has successfully established communication with a host within the network infrastructure.',
-        time: 15,
-        difficulty: 'Easy',
-        locked: false,
-        category: 'Network Security',
-        stars: 3,
-        completedBy: 750
-      },
-      {
-        id: 'apt28-part4',
-        title: 'APT28: Link to Trouble - Part 4',
-        description: 'APT28 continues to move deeper, step by step gaining a clearer understanding of what the TryGovMe organisation is built upon.',
-        time: 15,
-        difficulty: 'Easy',
-        locked: true,
-        category: 'Network Security',
-        stars: 3,
-        completedBy: 450
-      },
-      {
-        id: 'web-exploit-1',
-        title: 'SQL Injection Masterclass',
-        description: 'Learn advanced SQL injection techniques and how to exploit vulnerable web applications in a controlled environment.',
-        time: 45,
-        difficulty: 'Medium',
-        locked: false,
-        category: 'Web Security',
-        stars: 4,
-        completedBy: 2100
-      },
-      {
-        id: 'forensics-1',
-        title: 'Digital Crime Scene Investigation',
-        description: 'Analyze digital evidence from a compromised system and reconstruct the attack timeline using forensic tools.',
-        time: 60,
-        difficulty: 'Hard',
-        locked: false,
-        category: 'Forensics',
-        stars: 5,
-        completedBy: 320
-      },
-      {
-        id: 'malware-1',
-        title: 'Reverse Engineering Challenge',
-        description: 'Dissect malicious software to understand its behavior and develop countermeasures.',
-        time: 90,
-        difficulty: 'Hard',
-        locked: true,
-        category: 'Malware Analysis',
-        stars: 5,
-        completedBy: 180
-      },
-      {
-        id: 'social-eng-1',
-        title: 'Phishing Campaign Analysis',
-        description: 'Investigate a sophisticated phishing campaign and trace the attack vectors used by threat actors.',
-        time: 30,
-        difficulty: 'Medium',
-        locked: false,
-        category: 'Social Engineering',
-        stars: 4,
-        completedBy: 890
-      }
-    ];
-
+    this.scenarios = this.scenarioService.getAllScenarios();
     console.log('✅ Scenarios initialized:', this.scenarios.length);
   }
 
@@ -170,19 +84,19 @@ export class Home implements OnInit {
     }
 
     return this.scenarios.filter(scenario => {
-      const matchesSearch = !this.searchTerm || 
+      const matchesSearch = !this.searchTerm ||
         scenario.title.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         scenario.description.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         scenario.category.toLowerCase().includes(this.searchTerm.toLowerCase());
 
-      const matchesLength = !this.selectedLength || 
+      const matchesLength = !this.selectedLength ||
         `${scenario.time} mins` === this.selectedLength ||
         (this.selectedLength === '90+ mins' && scenario.time >= 90);
 
-      const matchesDifficulty = !this.selectedDifficulty || 
+      const matchesDifficulty = !this.selectedDifficulty ||
         scenario.difficulty === this.selectedDifficulty;
 
-      const matchesCategory = !this.selectedCategory || 
+      const matchesCategory = !this.selectedCategory ||
         scenario.category === this.selectedCategory;
 
       return matchesSearch && matchesLength && matchesDifficulty && matchesCategory;
@@ -207,7 +121,7 @@ export class Home implements OnInit {
       'Malware Analysis': 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
       'Social Engineering': 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'
     };
-    
+
     return colors[scenario.category] || colors['Network Security'];
   }
 

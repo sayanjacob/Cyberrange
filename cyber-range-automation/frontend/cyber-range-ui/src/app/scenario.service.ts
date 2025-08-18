@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Scenario } from './home/home';
+import axios from 'axios';
 
 @Injectable({
   providedIn: 'root'
@@ -8,19 +9,22 @@ export class ScenarioService {
 
   scenarios: (Scenario & { steps: {id: number, title: string, description: string, completed: boolean}[] })[] = [
     {
-      id: 'apt28-part1',
-      title: 'APT28: Link to Trouble - Part 1',
-      description: 'Here at TryGovMe, our partners have been consistently targeted by APT28 over the past few weeks and we are now under pressure to investigate.',
-      time: 15,
+      id: 'phishing-email-1',
+      title: 'Phishing Email Scenario',
+      description: 'Investigate a phishing email to identify and analyze a potential threat. This scenario will guide you through the process of examining the email headers, identifying the sender, and analyzing the content for malicious links or attachments.',
+      time: 20,
       difficulty: 'Easy',
       locked: false,
-      category: 'Network Security',
+      category: 'Social Engineering',
       stars: 3,
-      completedBy: 1250,
+      completedBy: 0,
       steps: [
-        { id: 1, title: 'Initial Compromise', description: 'Gain initial access to the target system.', completed: false },
-        { id: 2, title: 'Establish Foothold', description: 'Deploy persistence mechanisms.', completed: false },
-        { id: 3, title: 'Privilege Escalation', description: 'Gain higher privileges on the system.', completed: false },
+        { id: 1, title: 'Check mail', description: 'cat /var/mail/vagrant', completed: false },
+        { id: 2, title: 'Note phishing link', description: 'http://192.168.56.11/malicious_link.html', completed: false },
+        { id: 3, title: 'Open in browser or use wget', description: 'Open the link in a browser or use wget to download the file.', completed: false },
+        { id: 4, title: 'Check if file fake_invoice.exe dropped', description: 'Check if the file fake_invoice.exe was dropped in the system.', completed: false },
+        { id: 5, title: 'Review logs', description: '/var/log/syslog, /tmp, processes', completed: false },
+        { id: 6, title: 'Optional: Use net-tools to inspect connections', description: 'Use net-tools to inspect network connections.', completed: false }
       ]
     },
     {
@@ -62,30 +66,7 @@ export class ScenarioService {
       completedBy: 450,
       steps: []
     },
-    {
-      id: 'web-exploit-1',
-      title: 'SQL Injection Masterclass',
-      description: 'Learn advanced SQL injection techniques and how to exploit vulnerable web applications in a controlled environment.',
-      time: 45,
-      difficulty: 'Medium',
-      locked: false,
-      category: 'Web Security',
-      stars: 4,
-      completedBy: 2100,
-      steps: []
-    },
-    {
-      id: 'forensics-1',
-      title: 'Digital Crime Scene Investigation',
-      description: 'Analyze digital evidence from a compromised system and reconstruct the attack timeline using forensic tools.',
-      time: 60,
-      difficulty: 'Hard',
-      locked: false,
-      category: 'Forensics',
-      stars: 5,
-      completedBy: 320,
-      steps: []
-    },
+   
     {
       id: 'malware-1',
       title: 'Reverse Engineering Challenge',
@@ -97,27 +78,29 @@ export class ScenarioService {
       stars: 5,
       completedBy: 180,
       steps: []
-    },
-    {
-      id: 'social-eng-1',
-      title: 'Phishing Campaign Analysis',
-      description: 'Investigate a sophisticated phishing campaign and trace the attack vectors used by threat actors.',
-      time: 30,
-      difficulty: 'Medium',
-      locked: false,
-      category: 'Social Engineering',
-      stars: 4,
-      completedBy: 890,
-      steps: []
     }
+   
+    
   ];
 
   constructor() { }
+  private baseUrl = 'http://localhost:5000/api'; // Flask backend URL
 
   getScenario(id: string | null) {
     if (!id) {
       return undefined;
     }
     return this.scenarios.find(s => s.id === id);
+  }
+
+  async getStatus(){
+    const response =await axios.get(`${this.baseUrl}/health`);
+    //console.log('🔄 Status response:', response.data);
+    return response.data;
+  }
+
+
+  getAllScenarios() {
+    return this.scenarios;
   }
 }
