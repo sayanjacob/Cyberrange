@@ -1,0 +1,110 @@
+/* =========================
+   Navbar — dark glass aesthetic
+   ========================= */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+
+  border-bottom: 1px solid #334155;
+  background:
+    radial-gradient(120% 200% at 0% 0%, rgba(99, 179, 237, 0.08) 0%, rgba(99, 179, 237, 0) 60%),
+    linear-gradient(135deg, #0f1419 0%, #1a202c 50%, #2d3748 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+
+/* Brand (only applied if you have a .navbar-brand block) */
+.navbar-brand .navbar-item {
+  font-weight: 800;
+  letter-spacing: .2px;
+  font-size: 1.125rem;
+  color: #e2e8f0;
+  text-decoration: none;
+  transition: opacity .2s ease;
+}
+.navbar-brand .navbar-item:hover { opacity: .9; }
+
+/* Menu container */
+.navbar-menu {
+  display: flex;
+  flex: 1 1 auto;     /* let it fill row */
+  align-items: center;
+}
+
+/* Right side actions */
+.navbar-end {
+  display: flex;
+  align-items: center;
+  gap: 10px;          /* more breathing room */
+  margin-left: auto;  /* push to the right */
+}
+
+/* Items */
+.navbar-item {
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  color: #cbd5e1;
+  line-height: 1;     /* tidy inline height */
+}
+.navbar-item p { margin: 0; }
+
+/* Prevent generic hover from recoloring everything (links/buttons manage their own hover) */
+.navbar-item:not(:has(.button)):hover {
+  color: #f8fafc;
+}
+
+/* Buttons */
+.button.is-light {
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(99, 179, 237, 0.35);
+  color: #e2e8f0;
+  cursor: pointer;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 8px 14px;
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;
+  text-decoration: none;       /* anchors styled as buttons */
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.button.is-light:hover,
+.button.is-light:focus {
+  transform: translateY(-1px);
+  border-color: #63b3ed;
+  box-shadow: 0 8px 24px rgba(99, 179, 237, 0.25);
+  background: rgba(148, 163, 184, 0.12);
+  outline: none;
+}
+
+/* Active link state (if you add more links later) */
+.navbar-item.active {
+  color: #f8fafc;
+}
+
+/* -------------------------
+   Responsive tweaks
+   ------------------------- */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 10px 14px;
+  }
+  .navbar-menu,
+  .navbar-end {
+    gap: 8px;
+  }
+  .navbar-item {
+    padding: 0 6px;
+  }
+  .button.is-light {
+    padding: 8px 12px;
+    font-weight: 600;
+  }
+}

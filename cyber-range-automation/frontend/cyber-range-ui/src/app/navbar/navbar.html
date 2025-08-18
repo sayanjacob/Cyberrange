@@ -1,0 +1,22 @@
+<nav class="navbar">
+  <div class="navbar-brand">
+    <a class="navbar-item" href="/">
+      Cyber Range
+    </a>
+  </div>
+  <div class="navbar-menu">
+    <div class="navbar-end">
+      <div *ngIf="!isLoggedIn" class="navbar-item">
+        <a class="button is-light me-3 " (click)="login()">Login</a>
+        <a class="button is-light" (click)="register()">Register</a>
+      </div>
+      <div *ngIf="isLoggedIn" class="navbar-item">
+        <p class="pe-3">Hello, {{ username }}</p>
+
+        <a class="button is-light" (click)="logout()">
+          Logout
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>

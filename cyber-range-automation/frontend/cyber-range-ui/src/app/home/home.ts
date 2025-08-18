@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ScenarioService } from '../scenario.service';
+import { NavbarComponent } from "../navbar/navbar";
 
 export interface Scenario {
   id: string;
@@ -20,7 +21,7 @@ export interface Scenario {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [FormsModule, CommonModule, RouterModule],
+  imports: [FormsModule, CommonModule, RouterModule, NavbarComponent],
   templateUrl: './home.html', // Make sure this file exists
   styleUrls: ['./home.css']   // Make sure this file exists
 })

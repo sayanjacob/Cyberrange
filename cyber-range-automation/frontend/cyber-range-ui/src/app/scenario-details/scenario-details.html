@@ -1,4 +1,7 @@
+      <app-navbar></app-navbar>
+
 <div class="container-fluid m-0 p-4 text-light bg-dark min-vh-100" *ngIf="scenario">
+
   <!-- Scenario Title -->
   <div class="mb-3 text-light">
     <h1 class="display-4 fw-bold">{{ scenario.title }}</h1>
@@ -13,7 +16,7 @@
 
         <!-- Start Scenario Button -->
         <div class="col-auto">
-          <button class="btn btn-primary" (click)="runScenario()" [disabled]="isLoading">
+          <!-- <button class="btn btn-primary" (click)="runScenario()" [disabled]="isLoading">
             <i class="bi" [ngClass]="{
               'bi-play-fill': !isLoading,
               'bi-hourglass-split': isLoading
@@ -22,19 +25,17 @@
               <ng-container *ngIf="isLoading">Starting Scenario...</ng-container>
               <ng-container *ngIf="!isLoading">Start Scenario</ng-container>
             </span>
-          </button>
+          </button> -->
         </div>
 
         <!-- Multi-User Session Controls -->
         <div class="col-auto">
           <div class="btn-group" role="group">
             <ng-container *ngFor="let userType of availableUsers">
-              <button 
-                class="btn"
-                [ngClass]="sessions[userType].isActive ? 'btn-danger' : 'btn-outline-info'"
+              <button class="btn" [ngClass]="sessions[userType].isActive ? 'btn-danger' : 'btn-outline-info'"
                 (click)="sessions[userType].isActive ? closeGuacSession(userType) : startGuacSession(userType)"
                 [title]="(sessions[userType].isActive ? 'Close' : 'Start') + ' ' + userType + ' session'">
-                
+
                 <i class="bi" [ngClass]="getUserTypeIcon(userType)"></i>
                 <span class="ms-1">
                   {{ sessions[userType].isActive ? 'Close' : 'Start' }} {{ userType | titlecase }}
@@ -45,26 +46,20 @@
         </div>
 
         <!-- Bulk Session Controls -->
-        <div class="col-auto">
+        <!-- <div class="col-auto">
           <div class="btn-group" role="group">
-            <button 
-              class="btn btn-success"
-              (click)="connectAllSessions()"
-              [disabled]="isConnectingAll"
+            <button class="btn btn-success" (click)="connectAllSessions()" [disabled]="isConnectingAll"
               title="Connect All Sessions">
               <i class="bi bi-play-circle"></i>
               <span class="ms-1">Connect All</span>
             </button>
-            <button 
-              class="btn btn-warning"
-              (click)="disconnectAllSessions()"
-              [disabled]="isConnectingAll"
+            <button class="btn btn-warning" (click)="disconnectAllSessions()" [disabled]="isConnectingAll"
               title="Disconnect All Sessions">
               <i class="bi bi-stop-circle"></i>
               <span class="ms-1">Disconnect All</span>
             </button>
           </div>
-        </div>
+        </div> -->
 
         <!-- Active Sessions Counter -->
         <div class="col-auto" *ngIf="getActiveSessionsCount() > 0">
@@ -93,73 +88,64 @@
 
       <!-- Multi-User Session Windows -->
       <ng-container *ngFor="let userType of availableUsers">
-        <div 
-          class="lab-container mx-3 mb-3" 
-          [class]="'size-' + sessions[userType].windowSize + ' user-' + userType"
+        <div class="lab-container mx-3 mb-3" [class]="'size-' + sessions[userType].windowSize + ' user-' + userType"
           [ngStyle]="getSessionStyle(userType)"
           *ngIf="sessions[userType].isActive && sessions[userType].url && !sessions[userType].isMinimized">
-          
+
           <!-- Lab Header -->
-          <div class="lab-header" 
-               [ngStyle]="{'background': 'linear-gradient(135deg, ' + getUserTypeColor(userType) + ', ' + getUserTypeColor(userType) + '99)'}"
-               (mousedown)="startDrag($event, userType)"
-               style="cursor: move;">
-            
+          <div class="lab-header"
+            [ngStyle]="{'background': 'linear-gradient(135deg, ' + getUserTypeColor(userType) + ', ' + getUserTypeColor(userType) + '99)'}"
+            (mousedown)="startDrag($event, userType)" style="cursor: move;">
+
             <div class="lab-title">
               <i class="bi" [ngClass]="getUserTypeIcon(userType)"></i>
               <span class="ms-2">{{ getUserDisplayName(userType) }}</span>
             </div>
-            
+
             <div class="lab-controls d-flex align-items-center gap-2">
               <!-- Session Status -->
-              <span class="badge" 
-                    [ngClass]="sessions[userType].hasValidToken ? 'bg-success' : 'bg-warning'">
-                <i class="bi" [ngClass]="sessions[userType].hasValidToken ? 'bi-check-circle' : 'bi-exclamation-triangle'"></i>
+              <span class="badge" [ngClass]="sessions[userType].hasValidToken ? 'bg-success' : 'bg-warning'">
+                <i class="bi"
+                  [ngClass]="sessions[userType].hasValidToken ? 'bi-check-circle' : 'bi-exclamation-triangle'"></i>
                 <span class="ms-1">{{ sessions[userType].hasValidToken ? 'Connected' : 'Disconnected' }}</span>
               </span>
-              
+
               <!-- Window Size Controls -->
               <div class="btn-group btn-group-sm" *ngIf="sessions[userType].windowSize !== 'fullscreen'">
-                <button 
-                  class="btn btn-sm"
+                <button class="btn btn-sm"
                   [ngClass]="sessions[userType].windowSize === 'small' ? 'btn-light' : 'btn-outline-light'"
-                  (click)="setSessionSize(userType, 'small')"
-                  title="Small">S</button>
-                <button 
-                  class="btn btn-sm"
+                  (click)="setSessionSize(userType, 'small')" title="Small">S</button>
+                <button class="btn btn-sm"
                   [ngClass]="sessions[userType].windowSize === 'medium' ? 'btn-light' : 'btn-outline-light'"
-                  (click)="setSessionSize(userType, 'medium')"
-                  title="Medium">M</button>
-                <button 
-                  class="btn btn-sm"
+                  (click)="setSessionSize(userType, 'medium')" title="Medium">M</button>
+                <button class="btn btn-sm"
                   [ngClass]="sessions[userType].windowSize === 'large' ? 'btn-light' : 'btn-outline-light'"
-                  (click)="setSessionSize(userType, 'large')"
-                  title="Large">L</button>
+                  (click)="setSessionSize(userType, 'large')" title="Large">L</button>
               </div>
-              
+
               <!-- Control Buttons -->
               <button class="btn btn-outline-light btn-sm" (click)="refreshSession(userType)" title="Refresh">
                 <i class="bi bi-arrow-clockwise"></i>
               </button>
-              
+
               <button class="btn btn-outline-light btn-sm" (click)="openInNewTab(userType)" title="Open in New Tab">
                 <i class="bi bi-box-arrow-up-right"></i>
               </button>
-              
+
               <button class="btn btn-outline-light btn-sm" (click)="toggleMinimize(userType)" title="Minimize">
                 <i class="bi bi-dash"></i>
               </button>
-              
-              <button class="btn btn-outline-light btn-sm" (click)="setSessionSize(userType, 'fullscreen')" title="Fullscreen" 
-                      *ngIf="sessions[userType].windowSize !== 'fullscreen'">
+
+              <button class="btn btn-outline-light btn-sm" (click)="setSessionSize(userType, 'fullscreen')"
+                title="Fullscreen" *ngIf="sessions[userType].windowSize !== 'fullscreen'">
                 <i class="bi bi-arrows-fullscreen"></i>
               </button>
-              
-              <button class="btn btn-outline-light btn-sm" (click)="setSessionSize(userType, 'large')" title="Exit Fullscreen" 
-                      *ngIf="sessions[userType].windowSize === 'fullscreen'">
+
+              <button class="btn btn-outline-light btn-sm" (click)="setSessionSize(userType, 'large')"
+                title="Exit Fullscreen" *ngIf="sessions[userType].windowSize === 'fullscreen'">
                 <i class="bi bi-fullscreen-exit"></i>
               </button>
-              
+
               <button class="btn btn-outline-danger btn-sm" (click)="closeGuacSession(userType)" title="Close">
                 <i class="bi bi-x-lg"></i>
               </button>
@@ -169,10 +155,9 @@
           <!-- Lab Content -->
           <div class="lab-content">
             <iframe 
-              [src]="sessions[userType].url" 
-              class="guac-iframe" 
-              frameborder="0" 
-              allowfullscreen
+              sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-popups allow-downloads"
+
+              [src]="sessions[userType].url" class="guac-iframe" frameborder="0" allowfullscreen
               [title]="userType + ' session iframe'">
               <p>Your browser does not support iframes.</p>
             </iframe>
@@ -183,18 +168,14 @@
       <!-- Minimized Session Indicators -->
       <div class="minimized-sessions mx-3 mb-3" *ngIf="getActiveSessionsCount() > 0">
         <ng-container *ngFor="let userType of availableUsers">
-          <div 
-            class="minimized-session-indicator"
-            *ngIf="sessions[userType].isActive && sessions[userType].isMinimized"
-            (click)="toggleMinimize(userType)"
-            [ngStyle]="{'background-color': getUserTypeColor(userType)}">
-            
+          <div class="minimized-session-indicator" *ngIf="sessions[userType].isActive && sessions[userType].isMinimized"
+            (click)="toggleMinimize(userType)" [ngStyle]="{'background-color': getUserTypeColor(userType)}">
+
             <i class="bi" [ngClass]="getUserTypeIcon(userType)"></i>
             <span class="ms-1">{{ getUserDisplayName(userType) }}</span>
-            
-            <button class="btn btn-sm btn-outline-light ms-2" 
-                    (click)="closeGuacSession(userType); $event.stopPropagation()"
-                    title="Close session">
+
+            <button class="btn btn-sm btn-outline-light ms-2"
+              (click)="closeGuacSession(userType); $event.stopPropagation()" title="Close session">
               <i class="bi bi-x"></i>
             </button>
           </div>
@@ -205,25 +186,21 @@
       <div class="lab-placeholder mx-3" *ngIf="getActiveSessionsCount() === 0 && !isLoading && !isConnectingAll">
         <div class="placeholder-content text-center">
           <i class="bi bi-display fa-5x mb-3 text-muted"></i>
-          <h4 class="text-muted">Multi-User Lab Environment Ready</h4>
-          <p class="text-muted">Start individual sessions for different user perspectives.</p>
+          <h4 class="text-muted"> Lab Environment Ready</h4>
+          <p class="text-muted">Start sessions for different user perspectives.</p>
           <div class="mt-4">
             <ng-container *ngFor="let userType of availableUsers">
-              <button 
-                class="btn btn-outline-info me-2 mb-2"
-                (click)="startGuacSession(userType)">
+              <button class="btn btn-outline-info me-2 mb-2" (click)="startGuacSession(userType)">
                 <i class="bi" [ngClass]="getUserTypeIcon(userType)"></i>
                 <span class="ms-1">Launch {{ getUserDisplayName(userType) }}</span>
               </button>
             </ng-container>
-            <div class="mt-2">
-              <button 
-                class="btn btn-success me-2"
-                (click)="connectAllSessions()">
+            <!-- <div class="mt-2">
+              <button class="btn btn-success me-2" (click)="connectAllSessions()">
                 <i class="bi bi-play-circle"></i>
                 <span class="ms-1">Connect All Sessions</span>
               </button>
-            </div>
+            </div> -->
           </div>
         </div>
       </div>
@@ -235,16 +212,13 @@
             <h6 class="card-title">Active Sessions Overview</h6>
             <div class="row">
               <ng-container *ngFor="let userType of availableUsers">
-                <div 
-                  class="col-6"
-                  *ngIf="sessions[userType].isActive">
-                  
-                  <div class="session-card p-2 border rounded" 
-                       [ngStyle]="{'border-color': getUserTypeColor(userType)}">
+                <div class="col-6" *ngIf="sessions[userType].isActive">
+
+                  <div class="session-card p-2 border rounded" [ngStyle]="{'border-color': getUserTypeColor(userType)}">
                     <div class="d-flex align-items-center justify-content-between">
                       <div>
-                        <i class="bi" [ngClass]="getUserTypeIcon(userType)" 
-                           [ngStyle]="{'color': getUserTypeColor(userType)}"></i>
+                        <i class="bi" [ngClass]="getUserTypeIcon(userType)"
+                          [ngStyle]="{'color': getUserTypeColor(userType)}"></i>
                         <span class="ms-2 fw-bold">{{ getUserDisplayName(userType) }}</span>
                         <div class="small text-muted">{{ getUserDescription(userType) }}</div>
                       </div>
@@ -255,12 +229,13 @@
                           </span>
                         </div>
                         <div class="mt-1">
-                          <span class="badge" 
-                                [ngClass]="sessions[userType].hasValidToken ? 'bg-success' : 'bg-warning'">
-                            <i class="bi" [ngClass]="sessions[userType].hasValidToken ? 'bi-check-circle' : 'bi-exclamation-triangle'"></i>
+                          <span class="badge"
+                            [ngClass]="sessions[userType].hasValidToken ? 'bg-success' : 'bg-warning'">
+                            <i class="bi"
+                              [ngClass]="sessions[userType].hasValidToken ? 'bi-check-circle' : 'bi-exclamation-triangle'"></i>
                           </span>
-                          <span class="badge ms-1" 
-                                [ngClass]="!sessions[userType].isMinimized ? 'bg-success' : 'bg-secondary'">
+                          <span class="badge ms-1"
+                            [ngClass]="!sessions[userType].isMinimized ? 'bg-success' : 'bg-secondary'">
                             <i class="bi" [ngClass]="!sessions[userType].isMinimized ? 'bi-eye' : 'bi-eye-slash'"></i>
                           </span>
                         </div>
@@ -274,22 +249,18 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Steps Column -->
     <div class="col-4">
       <div class="card bg-dark border-secondary shadow-lg rounded-4">
         <div class="card-body">
           <h5 class="card-title fw-bold mb-3 text-light">Steps</h5>
           <ul class="list-group list-group-flush">
-            <li *ngFor="let step of scenario.steps; let i = index" 
-                class="list-group-item bg-dark text-light border-secondary">
+            <li *ngFor="let step of scenario.steps; let i = index"
+              class="list-group-item bg-dark text-light border-secondary">
               <div class="form-check">
-                <input class="form-check-input" 
-                       type="checkbox" 
-                       [(ngModel)]="step.completed" 
-                       [id]="'step' + i">
-                <label class="form-check-label fw-bold text-light" 
-                       [for]="'step' + i">
+                <input class="form-check-input" type="checkbox" [(ngModel)]="step.completed" [id]="'step' + i">
+                <label class="form-check-label fw-bold text-light" [for]="'step' + i">
                   {{ step.title }}
                 </label>
                 <p class="small mt-1" style="color: azure;">{{ step.description }}</p>
@@ -306,29 +277,29 @@
             <i class="bi bi-server me-2"></i>
             System Status
           </h5>
-          
+
           <div class="mb-3">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <span class="text-light">Available Users:</span>
               <span class="badge bg-info">{{ availableUsers.length }}</span>
             </div>
-            
+
             <ng-container *ngFor="let userType of availableUsers">
               <div class="d-flex align-items-center justify-content-between p-2 mb-2 rounded"
-                   [ngStyle]="{'background-color': getUserTypeColor(userType) + '20', 'border-left': '3px solid ' + getUserTypeColor(userType)}">
-                
+                [ngStyle]="{'background-color': getUserTypeColor(userType) + '20', 'border-left': '3px solid ' + getUserTypeColor(userType)}">
+
                 <div class="d-flex align-items-center">
-                  <i class="bi" [ngClass]="getUserTypeIcon(userType)" 
-                     [ngStyle]="{'color': getUserTypeColor(userType)}"></i>
+                  <i class="bi" [ngClass]="getUserTypeIcon(userType)"
+                    [ngStyle]="{'color': getUserTypeColor(userType)}"></i>
                   <div class="ms-2">
                     <div class="fw-bold text-light">{{ getUserDisplayName(userType) }}</div>
                     <small class="text-muted">{{ getUserDescription(userType) }}</small>
                   </div>
                 </div>
-                
+
                 <div>
-                  <span class="badge" 
-                        [ngClass]="userConfigs[userType] && userConfigs[userType].has_active_token ? 'bg-success' : 'bg-secondary'">
+                  <span class="badge"
+                    [ngClass]="userConfigs[userType] && userConfigs[userType].has_active_token ? 'bg-success' : 'bg-secondary'">
                     {{ userConfigs[userType] && userConfigs[userType].has_active_token ? 'Ready' : 'Inactive' }}
                   </span>
                 </div>
@@ -345,35 +316,32 @@
             <i class="bi bi-display me-2"></i>
             Live Sessions
           </h5>
-          
+
           <ng-container *ngFor="let userType of availableUsers">
             <div class="mb-3" *ngIf="sessions[userType].isActive">
               <div class="d-flex align-items-center justify-content-between p-2 rounded"
-                   [ngStyle]="{'background-color': getUserTypeColor(userType) + '20', 'border-left': '3px solid ' + getUserTypeColor(userType)}">
-                
+                [ngStyle]="{'background-color': getUserTypeColor(userType) + '20', 'border-left': '3px solid ' + getUserTypeColor(userType)}">
+
                 <div class="d-flex align-items-center">
-                  <i class="bi" [ngClass]="getUserTypeIcon(userType)" 
-                     [ngStyle]="{'color': getUserTypeColor(userType)}"></i>
+                  <i class="bi" [ngClass]="getUserTypeIcon(userType)"
+                    [ngStyle]="{'color': getUserTypeColor(userType)}"></i>
                   <div class="ms-2">
                     <div class="fw-bold text-light">{{ getUserDisplayName(userType) }}</div>
                     <small class="text-muted">
                       {{ sessions[userType].windowSize | titlecase }} window
-                      <span *ngIf="sessions[userType].lastActivity"> • 
+                      <span *ngIf="sessions[userType].lastActivity"> •
                         Active {{ getTimeSince(sessions[userType].lastActivity!) }}
                       </span>
                     </small>
                   </div>
                 </div>
-                
+
                 <div class="btn-group btn-group-sm">
-                  <button class="btn btn-outline-light btn-sm" 
-                          (click)="toggleMinimize(userType)"
-                          [title]="sessions[userType].isMinimized ? 'Restore' : 'Minimize'">
+                  <button class="btn btn-outline-light btn-sm" (click)="toggleMinimize(userType)"
+                    [title]="sessions[userType].isMinimized ? 'Restore' : 'Minimize'">
                     <i class="bi" [ngClass]="sessions[userType].isMinimized ? 'bi-window' : 'bi-dash'"></i>
                   </button>
-                  <button class="btn btn-outline-danger btn-sm" 
-                          (click)="closeGuacSession(userType)"
-                          title="Close">
+                  <button class="btn btn-outline-danger btn-sm" (click)="closeGuacSession(userType)" title="Close">
                     <i class="bi bi-x-lg"></i>
                   </button>
                 </div>

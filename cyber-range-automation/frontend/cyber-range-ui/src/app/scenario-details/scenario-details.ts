@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { HttpClient } from '@angular/common/http';
 import { Subscription, interval } from 'rxjs';
+import { NavbarComponent } from "../navbar/navbar";
 
 // Socket.IO client interface (simplified for basic usage without the library)
 interface Socket {
@@ -58,7 +59,7 @@ interface ScenarioResult {
 @Component({
   selector: 'app-scenario-details',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NavbarComponent],
   templateUrl: './scenario-details.html',
   styleUrls: ['./scenario-details.css']
 })
@@ -67,15 +68,15 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
   @ViewChild('attackerFrame', { static: false }) attackerFrame!: ElementRef<HTMLIFrameElement>;
 
   // Configuration
-  private readonly API_BASE = 'http://localhost:5000/api';
-  
+  private readonly API_BASE = '/api';
+
   // Component state
   scenario: any;
   isLoading = false;
   isConnectingAll = false;
   error: string | null = null;
   systemStatus: SystemStatus | null = null;
-  
+
   // Multi-user session management
   sessions: { [key: string]: GuacSession } = {
     victim: {
@@ -101,7 +102,7 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
   // Available user types
   availableUsers: ('victim' | 'attacker')[] = ['victim', 'attacker'];
   userConfigs: { [key: string]: GuacUserConfig } = {};
-  
+
   // Dragging state
   isDragging = false;
   dragTarget: string | null = null;
@@ -122,14 +123,14 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
     private sanitizer: DomSanitizer,
     private http: HttpClient,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     console.log('Scenario ID:', id);
     this.scenario = this.scenarioService.getScenario(id);
     console.log('Scenario details:', this.scenario);
-    
+
     this.initializeComponent();
   }
 
@@ -141,16 +142,16 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
     try {
       // Initialize WebSocket connection
       this.initializeWebSocket();
-      
+
       // Load system status
       await this.loadSystemStatus();
-      
+
       // Start periodic status checks
       this.startStatusChecks();
-      
+
       // Start activity tracking
       this.startActivityTracking();
-      
+
     } catch (error) {
       console.error('Error initializing component:', error);
       this.error = 'Failed to initialize lab environment. Please refresh the page.';
@@ -220,10 +221,10 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
       if (response) {
         this.systemStatus = response;
         this.userConfigs = response.guac_users;
-        this.availableUsers = Object.keys(response.guac_users).filter((user): user is 'victim' | 'attacker' => 
+        this.availableUsers = Object.keys(response.guac_users).filter((user): user is 'victim' | 'attacker' =>
           user === 'victim' || user === 'attacker'
         );
-        
+
         // Update session token status
         Object.keys(this.sessions).forEach(userType => {
           const config = this.userConfigs[userType];
@@ -231,7 +232,7 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
             this.sessions[userType].hasValidToken = config.has_active_token;
           }
         });
-        
+
         console.log('System status loaded:', response);
       }
     } catch (error) {
@@ -273,7 +274,7 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
       const session = this.sessions[userType];
       if (session.isActive && session.lastActivity) {
         const timeSinceActivity = new Date().getTime() - session.lastActivity.getTime();
-        
+
         // If no activity for 15 minutes, validate token
         if (timeSinceActivity > 15 * 60 * 1000) {
           await this.validateSessionToken(userType);
@@ -282,15 +283,6 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
     }
   }
 
-  private async validateSessionToken(userType: 'victim' | 'attacker') {
-    try {
-      const response = await this.http.get(`${this.API_BASE}/guac/connections/${userType}`).toPromise();
-      console.log(`Token validation for ${userType}:`, response);
-    } catch (error) {
-      console.warn(`Token validation failed for ${userType}, may need to reconnect:`, error);
-      this.sessions[userType].hasValidToken = false;
-    }
-  }
 
   // Helper method to calculate time since last activity
   getTimeSince(date: Date): string {
@@ -298,7 +290,7 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
     const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(minutes / 60);
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes % 60}m ago`;
     } else if (minutes > 0) {
@@ -312,14 +304,14 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
     try {
       this.isLoading = true;
       this.error = null;
-      
+
       console.log('Starting scenario...');
-      
+
       // Start the scenario backend first
       await this.startScenarioBackend();
-      
+
       this.isLoading = false;
-      
+
     } catch (error) {
       console.error('Error running scenario:', error);
       this.error = 'Failed to start scenario. Please try again.';
@@ -339,12 +331,12 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
 
       if (response) {
         console.log('Scenario started:', response);
-        
+
         if (!response.success) {
           throw new Error(`Scenario start failed: ${response.stderr || response.stdout}`);
         }
       }
-      
+
     } catch (error) {
       console.error('Error starting scenario backend:', error);
       throw error;
@@ -355,37 +347,76 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
     try {
       this.error = null;
       this.sessions[userType].isActive = true; // Set immediately for UI feedback
-      
+
+      console.log(`Requesting token for ${userType}...`);
+
       // Get token from backend
       const tokenResponse = await this.http.post<any>(
         `${this.API_BASE}/guac/token/${userType}`,
         {}
       ).toPromise();
-      
+
       if (tokenResponse) {
         const session = this.sessions[userType];
         session.token = tokenResponse.token;
         session.connectionUrl = tokenResponse.connection_url;
         session.hasValidToken = true;
         session.lastActivity = new Date();
-        
+
         // Use auto-login URL for iframe
         const autoLoginUrl = `${this.API_BASE.replace('/api', '')}/api/guac/auto-login/${userType}`;
         session.url = this.sanitizer.bypassSecurityTrustResourceUrl(autoLoginUrl);
         session.isMinimized = false;
-        
-        console.log(`Started ${userType} session:`, tokenResponse);
-        
+
+        console.log(`Started ${userType} session:`, {
+          cached: tokenResponse.cached,
+          connection_url: tokenResponse.connection_url
+        });
+
         // Update user config
         if (this.userConfigs[userType]) {
           this.userConfigs[userType].has_active_token = true;
         }
       }
-      
+
     } catch (error) {
       console.error(`Error starting ${userType} session:`, error);
-      this.error = `Failed to start ${userType} session. Please try again.`;
+
+      // Better error handling
+      let errorMessage = `Failed to start ${userType} session.`;
+      if (error && typeof error === 'object' && 'error' in error) {
+        const apiError = error as any;
+        if (apiError.error && apiError.error.error) {
+          errorMessage += ` ${apiError.error.error}`;
+        } else if (apiError.error) {
+          errorMessage += ` ${apiError.error}`;
+        }
+      } else if (error && typeof error === 'object' && 'message' in error) {
+        errorMessage += ` ${(error as any).message}`;
+      }
+
+      this.error = errorMessage + " Please check if the VMs are running and try again.";
       this.sessions[userType].isActive = false;
+      this.sessions[userType].hasValidToken = false;
+    }
+  }
+  //
+  private async validateSessionToken(userType: 'victim' | 'attacker') {
+    try {
+      const response = await this.http.get(`${this.API_BASE}/guac/connections/${userType}`).toPromise();
+      console.log(`Token validation for ${userType}:`, response);
+      return true;
+    } catch (error) {
+      console.warn(`Token validation failed for ${userType}, may need to reconnect:`, error);
+      this.sessions[userType].hasValidToken = false;
+
+      // Try to get a new token automatically
+      try {
+        await this.startGuacSession(userType);
+      } catch (retryError) {
+        console.error(`Failed to automatically refresh ${userType} session:`, retryError);
+      }
+      return false;
     }
   }
 
@@ -393,7 +424,7 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
     try {
       // Call disconnect endpoint
       await this.http.post(`${this.API_BASE}/guac/disconnect/${userType}`, {}).toPromise();
-      
+
       // Update local state
       const session = this.sessions[userType];
       session.isActive = false;
@@ -402,14 +433,14 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
       session.token = undefined;
       session.hasValidToken = false;
       session.connectionUrl = undefined;
-      
+
       // Update user config
       if (this.userConfigs[userType]) {
         this.userConfigs[userType].has_active_token = false;
       }
-      
+
       console.log(`Closed ${userType} session`);
-      
+
     } catch (error) {
       console.error(`Error closing ${userType} session:`, error);
       // Still update UI even if backend call fails
@@ -422,37 +453,37 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
     try {
       this.isConnectingAll = true;
       this.error = null;
-      
+
       // Call bulk connect endpoint
       const response = await this.http.post<any>(`${this.API_BASE}/guac/connect-all`, {}).toPromise();
-      
+
       if (response) {
         console.log('Bulk connect response:', response);
-        
+
         // Handle successful connections
         Object.keys(response.results).forEach(userType => {
           if (userType === 'victim' || userType === 'attacker') {
             const result = response.results[userType];
             const session = this.sessions[userType];
-            
+
             session.isActive = true;
             session.token = result.token;
             session.connectionUrl = result.connection_url;
             session.hasValidToken = true;
             session.lastActivity = new Date();
-            
+
             // Use auto-login URL for iframe
             const autoLoginUrl = `${this.API_BASE.replace('/api', '')}/api/guac/auto-login/${userType}`;
             session.url = this.sanitizer.bypassSecurityTrustResourceUrl(autoLoginUrl);
             session.isMinimized = false;
-            
+
             // Update user config
             if (this.userConfigs[userType]) {
               this.userConfigs[userType].has_active_token = true;
             }
           }
         });
-        
+
         // Handle errors
         if (Object.keys(response.errors).length > 0) {
           const errorMessages = Object.entries(response.errors)
@@ -461,7 +492,7 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
           this.error = `Some connections failed: ${errorMessages}`;
         }
       }
-      
+
     } catch (error) {
       console.error('Error connecting all sessions:', error);
       this.error = 'Failed to connect all sessions. Please try individually.';
@@ -473,13 +504,13 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
   async disconnectAllSessions() {
     try {
       this.isConnectingAll = true;
-      
+
       // Call bulk disconnect endpoint
       const response = await this.http.post<any>(`${this.API_BASE}/guac/disconnect-all`, {}).toPromise();
-      
+
       if (response) {
         console.log('Bulk disconnect response:', response);
-        
+
         // Update all sessions
         Object.keys(this.sessions).forEach(userType => {
           const session = this.sessions[userType];
@@ -489,14 +520,14 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
           session.token = undefined;
           session.hasValidToken = false;
           session.connectionUrl = undefined;
-          
+
           // Update user config
           if (this.userConfigs[userType]) {
             this.userConfigs[userType].has_active_token = false;
           }
         });
       }
-      
+
     } catch (error) {
       console.error('Error disconnecting all sessions:', error);
       this.error = 'Failed to disconnect all sessions.';
@@ -523,7 +554,7 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
 
   refreshSession(userType: 'victim' | 'attacker') {
     const frameRef = userType === 'victim' ? this.victimFrame : this.attackerFrame;
-    
+
     if (frameRef && frameRef.nativeElement) {
       const currentSrc = frameRef.nativeElement.src;
       frameRef.nativeElement.src = '';
@@ -543,7 +574,7 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
   startDrag(event: MouseEvent, userType: 'victim' | 'attacker') {
     const session = this.sessions[userType];
     if (session.windowSize === 'fullscreen') return;
-    
+
     event.preventDefault();
     this.isDragging = true;
     this.dragTarget = userType;
@@ -551,30 +582,30 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
       x: event.clientX - session.position.x,
       y: event.clientY - session.position.y
     };
-    
+
     // Add global mouse event listeners
     const handleMouseMove = (e: MouseEvent) => this.onDrag(e);
     const handleMouseUp = (e: MouseEvent) => this.stopDrag(e, handleMouseMove, handleMouseUp);
-    
+
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
   }
 
   onDrag(event: MouseEvent) {
     if (!this.isDragging || !this.dragTarget) return;
-    
+
     event.preventDefault();
     const session = this.sessions[this.dragTarget];
-    
+
     session.position = {
       x: event.clientX - this.dragOffset.x,
       y: event.clientY - this.dragOffset.y
     };
-    
+
     // Constrain to viewport with some padding
     const maxX = window.innerWidth - 400;
     const maxY = window.innerHeight - 300;
-    
+
     session.position.x = Math.max(0, Math.min(session.position.x, maxX));
     session.position.y = Math.max(0, Math.min(session.position.y, maxY));
   }
@@ -588,7 +619,7 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
 
   getSessionStyle(userType: 'victim' | 'attacker') {
     const session = this.sessions[userType];
-    
+
     if (session.windowSize === 'fullscreen') {
       return {
         'position': 'fixed',
@@ -599,7 +630,7 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
         'z-index': '9999'
       };
     }
-    
+
     return {
       'position': 'fixed',
       'top': session.position.y + 'px',
@@ -637,11 +668,11 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
       const session = this.sessions[data.user_type];
       session.hasValidToken = true;
       session.lastActivity = new Date();
-      
+
       if (this.userConfigs[data.user_type]) {
         this.userConfigs[data.user_type].has_active_token = true;
       }
-      
+
       this.cdr.detectChanges();
     }
   }
@@ -650,47 +681,47 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
     if (data.user_type && (data.user_type === 'victim' || data.user_type === 'attacker')) {
       const session = this.sessions[data.user_type];
       session.hasValidToken = false;
-      
+
       if (this.userConfigs[data.user_type]) {
         this.userConfigs[data.user_type].has_active_token = false;
       }
-      
+
       this.cdr.detectChanges();
     }
   }
 
   private handleBulkConnectComplete(data: any) {
     this.isConnectingAll = false;
-    
+
     // Update sessions based on results
     Object.keys(data.results).forEach(userType => {
       if (userType === 'victim' || userType === 'attacker') {
         const session = this.sessions[userType];
         session.hasValidToken = true;
         session.lastActivity = new Date();
-        
+
         if (this.userConfigs[userType]) {
           this.userConfigs[userType].has_active_token = true;
         }
       }
     });
-    
+
     this.cdr.detectChanges();
   }
 
   private handleBulkDisconnectComplete(data: any) {
     this.isConnectingAll = false;
-    
+
     // Update all sessions
     Object.keys(this.sessions).forEach(userType => {
       const session = this.sessions[userType];
       session.hasValidToken = false;
-      
+
       if (this.userConfigs[userType]) {
         this.userConfigs[userType].has_active_token = false;
       }
     });
-    
+
     this.cdr.detectChanges();
   }
 
@@ -711,22 +742,21 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
       this.socket.disconnect();
       this.socket = null;
     }
-    
+
     // Cleanup subscriptions
     this.subscriptions.forEach(sub => sub.unsubscribe());
-    
+
     if (this.statusCheckInterval) {
       this.statusCheckInterval.unsubscribe();
     }
-    
+
     if (this.activityCheckInterval) {
       this.activityCheckInterval.unsubscribe();
     }
-    
+
     // Remove event listeners
     ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'].forEach(event => {
-      document.removeEventListener(event, () => {}, true);
+      document.removeEventListener(event, () => { }, true);
     });
   }
-  
 }

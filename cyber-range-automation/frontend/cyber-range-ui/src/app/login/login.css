@@ -1,0 +1,109 @@
+/* =========================
+   Login — dark glass aesthetic
+   ========================= */
+.container {
+  padding-top: 60px;
+  padding-bottom: 60px;
+}
+
+.login-container {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+
+  /* glass card */
+  background:
+    radial-gradient(140% 200% at 0% 0%, rgba(99,179,237,0.10) 0%, rgba(99,179,237,0) 60%),
+    linear-gradient(180deg, rgba(17,24,39,0.85) 0%, rgba(30,41,59,0.85) 100%);
+  border: 1px solid rgba(99,179,237,0.25);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  padding: 28px 24px;
+}
+
+/* Title */
+.card-title {
+  margin-bottom: 18px;
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: .2px;
+  color: #e2e8f0;
+}
+
+/* Labels & helper text */
+.form-group label {
+  color: #cbd5e1;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+/* Inputs */
+.form-control {
+  background: rgba(2,6,23,0.35);
+  border: 1px solid rgba(99,179,237,0.25);
+  color: #e2e8f0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+
+.form-control::placeholder { color: #94a3b8; }
+
+.form-control:focus {
+  outline: none;
+  background: rgba(2,6,23,0.45);
+  border-color: #63b3ed;
+  box-shadow: 0 0 0 3px rgba(99,179,237,0.25);
+}
+
+/* Button */
+.btn.btn-primary.btn-block {
+  width: 100%;
+  margin-top: 12px;
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  border: 1px solid rgba(99,179,237,0.45);
+  color: #f8fafc;
+  font-weight: 700;
+  padding: 10px 14px;
+  border-radius: 12px;
+  transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+}
+
+.btn.btn-primary.btn-block:hover,
+.btn.btn-primary.btn-block:focus {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 28px rgba(37,99,235,0.35);
+  filter: brightness(1.03);
+  outline: none;
+}
+
+/* Link under form */
+.card-body p,
+.card-body a {
+  color: #cbd5e1;
+}
+
+.card-body a {
+  color: #63b3ed;
+  text-decoration: none;
+  font-weight: 600;
+}
+.card-body a:hover { text-decoration: underline; }
+
+/* Spacing & layout helpers */
+.form-group { margin-bottom: 14px; }
+
+/* Optional: invalid state (works nicely with Angular/Bootstrap) */
+.form-control.ng-invalid.ng-touched,
+.form-control.is-invalid {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239,68,68,0.15);
+}
+
+/* Responsive tweaks */
+@media (max-width: 576px) {
+  .login-container { padding: 22px 18px; }
+  .card-title { font-size: 1.35rem; }
+}
