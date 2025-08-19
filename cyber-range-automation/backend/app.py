@@ -733,7 +733,7 @@ def create_app() -> Flask:
             connection_url = tokenized_connection_url(connection_id, token, ds)
 
             # Generate enhanced HTML page
-            html = self._generate_connection_page(
+            html = _generate_connection_page(
                 user_type, user_config, connection_url
             )
 
@@ -742,10 +742,9 @@ def create_app() -> Flask:
 
         except Exception as e:
             app_logger.error(f"Auto-login failed for {user_type}: {e}")
-            error_html = self._generate_error_page(user_type, str(e))
+            error_html = _generate_error_page(user_type, str(e))
             return Response(error_html, mimetype="text/html", status=500)
-
-    def _generate_error_page(self, user_type: str, error_message: str) -> str:
+    def _generate_error_page(user_type: str, error_message: str) -> str:
         """Generate enhanced error page"""
         return f"""<!doctype html>
 <html lang="en">
@@ -812,9 +811,7 @@ def create_app() -> Flask:
 </body>
 </html>"""
 
-    def _generate_connection_page(
-        self, user_type: str, user_config: dict, connection_url: str
-    ) -> str:
+    def _generate_connection_page(user_type: str, user_config: dict, connection_url: str) -> str:
         """Generate enhanced connection page with better UX"""
         return f"""<!doctype html>
 <html lang="en">
@@ -935,7 +932,7 @@ def create_app() -> Flask:
             
             function attemptConnection() {{
                 attemptCount++;
-                updateStatus(`Attempting connection (${attemptCount}/${maxAttempts})...`);
+                updateStatus(`Attempting connection (${{attemptCount}}/${{maxAttempts}})...`);
                 
                 try {{ 
                     // Try to redirect to the connection
@@ -987,7 +984,6 @@ def create_app() -> Flask:
     </script>
 </body>
 </html>"""
-
     @app.post("/api/guac/disconnect/<user_type>")
     @monitor_performance("disconnect_user")
     def disconnect_user(user_type):

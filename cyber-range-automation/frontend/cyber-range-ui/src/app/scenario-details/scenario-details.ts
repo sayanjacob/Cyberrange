@@ -3,10 +3,14 @@ import { ActivatedRoute } from '@angular/router';
 import { ScenarioService } from '../scenario.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { DomSanitizer, SafeResourceUrl, SafeHtml } from '@angular/platform-browser';
 import { HttpClient } from '@angular/common/http';
 import { Subscription, interval } from 'rxjs';
 import { NavbarComponent } from "../navbar/navbar";
+
+// ADD
+type Step = { id: number; title: string; description: string; completed: boolean };
+
 
 // Socket.IO client interface (simplified for basic usage without the library)
 interface Socket {
@@ -68,7 +72,7 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
   @ViewChild('attackerFrame', { static: false }) attackerFrame!: ElementRef<HTMLIFrameElement>;
 
   // Configuration
-  private readonly API_BASE = '/api';
+  private readonly API_BASE = 'http://127.0.0.1:5000/api';
 
   // Component state
   scenario: any;
@@ -122,7 +126,8 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
     private scenarioService: ScenarioService,
     private sanitizer: DomSanitizer,
     private http: HttpClient,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+
   ) { }
 
   ngOnInit(): void {
@@ -130,13 +135,89 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
     console.log('Scenario ID:', id);
     this.scenario = this.scenarioService.getScenario(id);
     console.log('Scenario details:', this.scenario);
+    const steps = (this.scenario?.steps ?? []) as Step[];
+    this.formattedSteps = steps.map((s: Step) => {
+      const { html, firstCode } = this.renderStep(s.description || '');
+      return {
+        id: s.id,
+        title: s.title,
+        completed: s.completed,
+        html,
+        firstCode,
+        expanded: false   // 👈 add this
+      };
+    });
+
+
 
     this.initializeComponent();
   }
+  // After (ADD expanded):
+  formattedSteps: Array<{
+    id: number;
+    title: string;
+    completed: boolean;
+    html: SafeHtml;
+    firstCode?: string;
+    expanded: boolean;
+  }> = [];
 
   ngOnDestroy(): void {
     this.cleanup();
   }
+  toggleExpand(index: number): void {
+    this.formattedSteps[index].expanded = !this.formattedSteps[index].expanded;
+  }
+
+
+
+  // ADD
+  toggleCompleted(index: number, value: boolean) {
+    if (!this.scenario) return;
+    this.scenario.steps[index].completed = value;
+    this.formattedSteps[index].completed = value;
+  }
+
+  copy(text?: string) {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+  }
+
+  /** Minimal renderer:
+   * - Escapes HTML
+   * - Converts ``` blocks to <pre class="cr-pre"><code>...</code></pre>
+   * - Converts `inline` to <code class="cr-inline">
+   * - Double newline => paragraph; single newline => <br>
+   */
+  private renderStep(src: string): { html: SafeHtml; firstCode?: string } {
+    const esc = (t: string) =>
+      t.replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    let t = src || '';
+    let firstCode: string | undefined;
+
+    // fenced blocks
+    const fence = /```([a-zA-Z0-9_-]+)?\s*([\s\S]*?)```/g;
+    t = t.replace(fence, (_m, _lang, code) => {
+      const clean = (code as string).replace(/^\n+|\n+$/g, '');
+      if (!firstCode) firstCode = clean;
+      return `<pre class="cr-pre"><code>${esc(clean)}</code></pre>`;
+    });
+
+    // inline code
+    t = t.replace(/`([^`]+)`/g, (_m, code) => `<code class="cr-inline">${esc(code)}</code>`);
+
+    // paragraphs + line breaks
+    const html = t
+      .split(/\n{2,}/)
+      .map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`)
+      .join('');
+
+    return { html: this.sanitizer.bypassSecurityTrustHtml(html), firstCode };
+  }
+
 
   private async initializeComponent() {
     try {

@@ -189,7 +189,7 @@
   }
   
   .display-4 {
-    font-size: 2rem;
+    font-size: 20px;
   }
   
   .btn-group {
@@ -978,4 +978,100 @@
   color: #ffc107;
   background: rgba(255, 193, 7, 0.1);
   border-color: rgba(255, 193, 7, 0.3);
+
+/* Single-column step cards */
+.step-card {
+  background: #0f1419;
+  border: 1px solid #1f2937;
+  border-radius: 1rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+}
+
+/* Code block styling */
+.cr-pre {
+  background: #0e1116;
+  border: 1px solid #1f2937;
+  border-radius: 0.75rem;
+  padding: 0.85rem 1rem;
+  overflow-x: auto;
+  white-space: pre;
+  margin: 0.75rem 0 0.25rem 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Inline code */
+.cr-inline {
+  background: #0e1116;
+  border: 1px solid #1f2937;
+  border-radius: 0.4rem;
+  padding: 0.1rem 0.35rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.92em;
+}
+
+/* Tweak header of step cards */
+.step-card .card-header {
+  background: #121826;
+  border-bottom: 1px solid #1f2937;
+  color: #e5e7eb;
+}
+
+/* Clickable header area for expand/collapse */
+.step-toggle { cursor: pointer; user-select: none; }
+.step-toggle:focus { outline: 2px solid #3b82f6; outline-offset: 2px; border-radius: .5rem; }
+.step-toggle .bi { margin-right: 2px; }
+/* Clickable header area for expand/collapse */
+.step-toggle { cursor: pointer; user-select: none; }
+.step-toggle:focus { outline: 2px solid #3b82f6; outline-offset: 2px; border-radius: .5rem; }
+.step-toggle .bi { margin-right: 2px; }
+}
+/* darker header shade for cards */
+.bg-dark-2 {
+  background-color: #121826 !important;
+}
+
+/* unify step card visuals with dark theme */
+.step-card {
+  background-color: #0f1419 !important;
+  color: #e5e7eb !important;
+  border: 1px solid #273244 !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+}
+
+.step-card .card-header {
+  background-color: #121826 !important;
+  border-bottom: 1px solid #273244 !important;
+  color: #e5e7eb !important;
+}
+
+.step-card .card-body {
+  background-color: #0f1419 !important;
+  color: #e5e7eb !important;
+}
+
+/* checkbox + copy button theming */
+.step-card .form-check-input {
+  background-color: transparent;
+  border-color: #334155;
+}
+.step-card .form-check-input:checked {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.step-card .btn-outline-light {
+  border-color: #475569;
+}
+.step-card .btn-outline-light:hover {
+  color: #0f1419;
+  background-color: #e5e7eb;
+  border-color: #e5e7eb;
+}
+
+/* keep code blocks consistent (if not already present) */
+.cr-pre, .cr-inline {
+  color: #e5e7eb;
 }

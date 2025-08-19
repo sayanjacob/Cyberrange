@@ -1,16 +1,17 @@
-      <app-navbar></app-navbar>
+<app-navbar></app-navbar>
+
 
 <div class="container-fluid m-0 p-4 text-light bg-dark min-vh-100" *ngIf="scenario">
 
   <!-- Scenario Title -->
   <div class="mb-3 text-light">
-    <h1 class="display-4 fw-bold">{{ scenario.title }}</h1>
+    <h6 class="display-4 fw-bold">{{ scenario.title }}</h6>
     <p class="lead">{{ scenario.description }}</p>
   </div>
 
   <!-- Steps -->
   <div class="row g-4 text-light">
-    <div class="col-8">
+    <div class="col-12">
       <!-- Action Buttons Row -->
       <div class="row mx-3 mb-4 align-items-center g-2">
 
@@ -154,9 +155,8 @@
 
           <!-- Lab Content -->
           <div class="lab-content">
-            <iframe 
+            <iframe
               sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-popups allow-downloads"
-
               [src]="sessions[userType].url" class="guac-iframe" frameborder="0" allowfullscreen
               [title]="userType + ' session iframe'">
               <p>Your browser does not support iframes.</p>
@@ -251,23 +251,54 @@
     </div>
 
     <!-- Steps Column -->
-    <div class="col-4">
-      <div class="card bg-dark border-secondary shadow-lg rounded-4">
-        <div class="card-body">
-          <h5 class="card-title fw-bold mb-3 text-light">Steps</h5>
-          <ul class="list-group list-group-flush">
-            <li *ngFor="let step of scenario.steps; let i = index"
-              class="list-group-item bg-dark text-light border-secondary">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" [(ngModel)]="step.completed" [id]="'step' + i">
-                <label class="form-check-label fw-bold text-light" [for]="'step' + i">
-                  {{ step.title }}
-                </label>
-                <p class="small mt-1" style="color: azure;">{{ step.description }}</p>
+    <div class="card bg-dark border-secondary shadow-lg rounded-4">
+      <!-- <div class="card-body">
+        <h5 class="card-title fw-bold mb-3 text-light">Steps</h5>
+        <ul class="list-group list-group-flush">
+          <li *ngFor="let step of scenario.steps; let i = index"
+            class="list-group-item bg-dark text-light border-secondary">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" [(ngModel)]="step.completed" [id]="'step' + i">
+              <label class="form-check-label fw-bold text-light" [for]="'step' + i">
+                {{ step.title }}
+              </label>
+              <p class="small mt-1" style="color: azure;">{{ step.description }}</p>
+            </div>
+          </li>
+        </ul>
+      </div> -->
+      <!-- Steps: single-column list -->
+      <div class="step-list mx-3 my-4">
+        <div *ngFor="let step of formattedSteps; let i = index" class="card step-card mb-3">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2 step-toggle" (click)="toggleExpand(i)"
+              (keydown.enter)="toggleExpand(i)" (keydown.space)="toggleExpand(i)" role="button" tabindex="0"
+              [attr.aria-expanded]="step.expanded" [attr.aria-controls]="'step-body-'+i">
+              <i class="bi" [ngClass]="step.expanded ? 'bi-caret-down-fill' : 'bi-caret-right-fill'"></i>
+              <span class="badge bg-primary rounded-pill">Step {{ i + 1 }}</span>
+              <h2 class="h6 mb-0">{{ step.title }}</h2>
+            </div>
+
+
+            <div class="d-flex align-items-center gap-3">
+              <div class="form-check m-0">
+                <input class="form-check-input" type="checkbox" [checked]="step.completed"
+                  (change)="toggleCompleted(i, $any($event.target).checked)" id="chk-{{i}}">
+                <label class="form-check-label small" for="chk-{{i}}">Done</label>
               </div>
-            </li>
-          </ul>
+
+              <button *ngIf="step.firstCode" class="btn btn-outline-secondary btn-sm" (click)="copy(step.firstCode)">
+                <i class="bi bi-clipboard"></i> Copy code
+              </button>
+            </div>
+          </div>
+
+          <div class="card-body" [id]="'step-body-'+i" [hidden]="!step.expanded">
+            <div [innerHTML]="step.html"></div>
+          </div>
+
         </div>
+      </div>
       </div>
 
       <!-- System Status Card -->
@@ -356,4 +387,3 @@
       </div>
     </div>
   </div>
-</div>
