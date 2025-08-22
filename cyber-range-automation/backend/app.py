@@ -24,8 +24,10 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 # =========================
 # PRODUCTION CHANGES: Updated defaults for nginx deployment
 ALLOWED_ORIGINS = os.getenv(
-    "ALLOWED_ORIGINS", "http://20.197.40.109,http://localhost:4200,http://127.0.0.1:4200"
+    "ALLOWED_ORIGINS", 
+    "http://20.197.40.109,http://localhost:4200,http://127.0.0.1:4200,*"
 ).split(",")
+
 
 SCRIPTS_ROOT = os.path.abspath(
     os.getenv("SCRIPTS_ROOT", os.path.join(os.path.dirname(__file__), "scripts"))
@@ -71,6 +73,7 @@ SSL_CONTEXT = None
 if os.getenv("SSL_CERT") and os.getenv("SSL_KEY"):
     SSL_CONTEXT = (os.getenv("SSL_CERT"), os.getenv("SSL_KEY"))
 
+
 # =========================
 # Enhanced Logging Setup
 # =========================
@@ -108,24 +111,26 @@ def setup_logging():
     app_file_handler.setLevel(logging.INFO)
     app_file_handler.setFormatter(detailed_formatter)
 
-    security_file_handler = logging.FileHandler(
-        os.path.join(log_dir, "security.log")
-    )
+    security_file_handler = logging.FileHandler(os.path.join(log_dir, "security.log"))
     security_file_handler.setLevel(logging.INFO)
     security_file_handler.setFormatter(detailed_formatter)
 
-    perf_file_handler = logging.FileHandler(
-        os.path.join(log_dir, "performance.log")
-    )
+    perf_file_handler = logging.FileHandler(os.path.join(log_dir, "performance.log"))
     perf_file_handler.setLevel(logging.INFO)
     perf_file_handler.setFormatter(detailed_formatter)
 
     # Add handlers to loggers
     for logger in [app_logger, security_logger, perf_logger]:
         logger.addHandler(console_handler)
-        logger.addHandler(app_file_handler if logger == app_logger else 
-                         security_file_handler if logger == security_logger else 
-                         perf_file_handler)
+        logger.addHandler(
+            app_file_handler
+            if logger == app_logger
+            else (
+                security_file_handler
+                if logger == security_logger
+                else perf_file_handler
+            )
+        )
 
     return app_logger, security_logger, perf_logger
 
@@ -510,20 +515,16 @@ def tokenized_connection_url(
 def create_app() -> Flask:
     app = Flask(__name__)
     app.config["SECRET_KEY"] = SECRET_KEY
-    
+
     # PRODUCTION CHANGES: Enhanced security settings
     app.config["SESSION_COOKIE_HTTPONLY"] = True
-    app.config["SESSION_COOKIE_SECURE"] = not FLASK_DEBUG  # True in production
+    app.config["SESSION_COOKIE_SECURE"] = False  # True in production
     app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(seconds=SESSION_TIMEOUT)
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-    
+
     # PRODUCTION CHANGES: Improved proxy handling for nginx
     app.wsgi_app = ProxyFix(
-        app.wsgi_app, 
-        x_for=2,      # nginx -> gunicorn
-        x_proto=1, 
-        x_host=1, 
-        x_prefix=1
+        app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1  # nginx -> gunicorn
     )
 
     # Enhanced CORS configuration
@@ -559,7 +560,7 @@ def create_app() -> Flask:
             session_manager.update_session_activity(session["session_id"])
 
         # PRODUCTION CHANGES: Log real client IP through nginx
-        client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+        client_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
         if FLASK_DEBUG:
             try:
                 body = request.get_data(as_text=True) or ""
@@ -578,10 +579,10 @@ def create_app() -> Flask:
     def after_request(response):
         # PRODUCTION CHANGES: Add security headers
         if not FLASK_DEBUG:
-            response.headers['X-Content-Type-Options'] = 'nosniff'
-            response.headers['X-Frame-Options'] = 'DENY'
-            response.headers['X-XSS-Protection'] = '1; mode=block'
-            
+            response.headers["X-Content-Type-Options"] = "nosniff"
+            response.headers["X-Frame-Options"] = "DENY"
+            response.headers["X-XSS-Protection"] = "1; mode=block"
+
         if FLASK_DEBUG:
             app_logger.debug(
                 f"RESPONSE: {response.status} for {request.method} {request.path}"
@@ -618,15 +619,17 @@ def main():
         if not FLASK_DEBUG and SECRET_KEY == "your-secret-key-change-in-production":
             app_logger.error("❌ SECRET_KEY must be set in production!")
             sys.exit(1)
-            
+
         # Validate required environment variables
         required_env_vars = []
         if not FLASK_DEBUG:
-            required_env_vars.extend(['SECRET_KEY'])
-            
+            required_env_vars.extend(["SECRET_KEY"])
+
         missing_vars = [var for var in required_env_vars if not os.getenv(var)]
         if missing_vars:
-            app_logger.error(f"❌ Missing required environment variables: {missing_vars}")
+            app_logger.error(
+                f"❌ Missing required environment variables: {missing_vars}"
+            )
             sys.exit(1)
 
         # Create Flask app
@@ -651,7 +654,9 @@ def main():
             print(startup_info)
             app_logger.info("Server starting in DEBUG mode")
         else:
-            app_logger.info(f"Server starting in PRODUCTION mode on {FLASK_HOST}:{FLASK_PORT}")
+            app_logger.info(
+                f"Server starting in PRODUCTION mode on {FLASK_HOST}:{FLASK_PORT}"
+            )
             app_logger.info(f"Guacamole backend: {GUAC_BASE}")
             app_logger.info(f"Session timeout: {SESSION_TIMEOUT}s")
 
@@ -671,7 +676,9 @@ def main():
 
         # PRODUCTION CHANGES: Production warning
         if not FLASK_DEBUG:
-            app_logger.warning("🚀 Starting in production mode - use gunicorn for better performance")
+            app_logger.warning(
+                "🚀 Starting in production mode - use gunicorn for better performance"
+            )
 
         # Start the server
         security_logger.info("SERVER_STARTING")
