@@ -72,7 +72,9 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
   @ViewChild('attackerFrame', { static: false }) attackerFrame!: ElementRef<HTMLIFrameElement>;
 
   // Configuration
-  private readonly API_BASE = 'http://127.0.0.1:5000/api';
+  // private readonly API_BASE = 'http://127.0.0.1:5000/api';
+  private readonly API_BASE = 'http://20.197.40.109/api';
+
 
   // Component state
   scenario: any;
