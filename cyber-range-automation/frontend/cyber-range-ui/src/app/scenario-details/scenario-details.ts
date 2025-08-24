@@ -842,4 +842,13 @@ export class ScenarioDetailsComponent implements OnInit, OnDestroy {
       document.removeEventListener(event, () => { }, true);
     });
   }
+
+  getCompletedStepsCount(): number {
+    return this.formattedSteps.filter(step => step.completed).length;
+  }
+
+  getStepsProgress(): number {
+    if (!this.formattedSteps.length) return 0;
+    return Math.round((this.getCompletedStepsCount() / this.formattedSteps.length) * 100);
+  }
 }

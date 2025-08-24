@@ -8,43 +8,43 @@ import axios from 'axios';
 export class ScenarioService {
 
   scenarios: (Scenario & { steps: { id: number, title: string, description: string, completed: boolean }[] })[] = [
-   //scenario 1
-   
-    {
-      id: 'ps-keylogger-splunk',
-      title: 'PowerShell Keylogger: Attack, Detect & Respond',
-      description: 'Simulate a PowerShell-based keylogger from Kali to a Windows victim, then detect and alert using Splunk and perform incident response.',
-      time: 45,
-      difficulty: 'Medium',
-      locked: false,
-      category: 'Endpoint + SIEM',
-      stars: 4,
-      completedBy: 0,
-      steps: [
-        {
-          id: 1,
-          title: '🎯 Objective',
-          description: `Simulate a PowerShell-based keylogger attack from Kali (10.0.0.6) to a Windows victim, detect it in Splunk, and walk through containment, eradication, and recovery.`,
-          completed: false
-        },
+  {
+    id: 'ps-keylogger-splunk',
+    title: 'PowerShell Keylogger: Attack, Detect & Respond',
+    description: `Simulate a PowerShell-based keylogger from Kali to a Windows victim, then detect and alert using Splunk and perform incident response.
+    
+This scenario demonstrates the full attack chain: initial compromise, payload delivery, execution, detection via SIEM (Splunk), and a guided incident response workflow. You'll learn how attackers use PowerShell for stealthy keylogging, how defenders can spot script block logging events, and how to contain and eradicate the threat. The lab is mapped to MITRE ATT&CK T1056 (Input Capture) and T1086 (PowerShell). Ideal for endpoint security and SIEM analysts.`,
+    time: 45,
+    difficulty: 'Medium',
+    locked: false,
+    category: 'Endpoint + SIEM',
+    stars: 4,
+    completedBy: 0,
+    steps: [
+      {
+        id: 1,
+        title: '🎯 Objective',
+        description: `Simulate a PowerShell-based keylogger attack from Kali (10.0.0.6) to a Windows victim, detect it in Splunk, and walk through containment, eradication, and recovery.`,
+        completed: false
+      },
 
-        // ========== 1️⃣ Attacker (Kali: 10.0.0.6) ==========
-        {
-          id: 2,
-          title: 'Kali: Start HTTP server',
-          description: `On Kali, host a simple web server to serve the payload:\n\ncd /var/www/html\npython3 -m http.server 1234`,
-          completed: false
-        },
-        {
-          id: 3,
-          title: 'Kali: Place keylogger.ps1',
-          description: `Copy keylogger.ps1 into /var/www/html so it’s reachable at http://10.0.0.6:1234/keylogger.ps1`,
-          completed: false
-        },
-        {
-          id: 4,
-          title: 'keylogger.ps1 (full content)',
-          description: `PowerShell script used for simulation (educational use only):
+      // ========== 1️⃣ Attacker (Kali: 10.0.0.6) ==========
+      {
+        id: 2,
+        title: 'Kali: Start HTTP server',
+        description: `On Kali, host a simple web server to serve the payload:\n\ncd /var/www/html\npython3 -m http.server 1234`,
+        completed: false
+      },
+      {
+        id: 3,
+        title: 'Kali: Place keylogger.ps1',
+        description: `Copy keylogger.ps1 into /var/www/html so it’s reachable at http://10.0.0.6:1234/keylogger.ps1`,
+        completed: false
+      },
+      {
+        id: 4,
+        title: 'keylogger.ps1 (full content)',
+        description: `PowerShell script used for simulation (educational use only):
 
 \`\`\`powershell
 # PowerShell Keylogger for Simulated Test Environments
@@ -221,7 +221,9 @@ while ($true) {
     {
       id: 'ransomware-ps-simulator',
       title: 'Ransomware Simulator (PowerShell): Encrypt, Investigate, Recover',
-      description: 'Simulate MITRE ATT&CK T1486 (Data Encrypted for Impact) in a safe lab. Encrypt sample files, locate the AES key, and recover the data while practicing IR.',
+      description: `Simulate MITRE ATT&CK T1486 (Data Encrypted for Impact) in a safe lab. Encrypt sample files, locate the AES key, and recover the data while practicing IR.
+    
+This hands-on scenario lets you experience a ransomware attack without real risk. You'll use a custom PowerShell script to encrypt files, drop a ransom note, and then walk through the investigation and recovery process. The lab covers key IR phases: detection, investigation, containment, eradication, and recovery. You'll learn how to identify ransomware artifacts, locate encryption keys, and restore data. Perfect for SOC analysts and incident responders.`,
       time: 35,
       difficulty: 'Medium',
       locked: false,
@@ -420,7 +422,9 @@ else {
     {
       id: 'phishing-google-harvester',
       title: 'Phishing (Credential Harvester – Google Template)',
-      description: 'Use SEToolkit to clone a Google login page, capture credentials, and run the full incident response workflow in a safe lab.',
+      description: `Use SEToolkit to clone a Google login page, capture credentials, and run the full incident response workflow in a safe lab.
+    
+This scenario simulates a real-world phishing attack using SEToolkit on Kali Linux. You'll clone a Google login page, lure a victim, and capture credentials. The lab guides you through detection (browser history, DNS cache), containment (firewall rules), eradication (cache cleanup), recovery (password reset, MFA), and documentation. Mapped to MITRE ATT&CK T1566 (Phishing) and T1114 (Email Collection). Great for blue teamers, user awareness training, and IR practice.`,
       time: 35,
       difficulty: 'Easy',
       locked: false,

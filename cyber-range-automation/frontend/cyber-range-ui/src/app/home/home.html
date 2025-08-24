@@ -1,23 +1,17 @@
 <!-- home.html - Fixed version -->
-        <app-navbar></app-navbar>
+<app-navbar></app-navbar>
 
 <div class="container-fluid m-0 p-4 text-light min-vh-100" style="background-color: #1a1a1a;">
 
-  <!-- Debug Info (remove this after fixing) -->
-  <!-- <div class="alert alert-info mb-3" style="font-size: 12px;">
-    Debug: {{ scenarios?.length || 0 }} scenarios, {{ filteredScenarios()?.length || 0 }} filtered
-  </div> -->
 
-  <!-- Header -->
-  <div class="main-header card text-bg-dark border-dark mb-5 text-center">
-    <div class="card-body py-4">
-      <h1 class="display-4 fw-bold text-light mb-3">
-      Cyber Range Scenarios
+  <!-- Search and Filters -->
+  <div class="search-container mb-5 text-center">
+    <div class="row g-3 justify-content-center">
+
+      <h1 class="fw-bold text-light mb-1">
+        Cyber Range Scenarios
       </h1>
-      <p class="lead">
-        Hone your cybersecurity skills by tackling real-world challenges in our immersive training environment
-      </p>
-      <div class="mt-3">
+      <div class="my-2">
         <span class="badge bg-primary me-2">
           📊 {{ totalScenarios }} Scenarios Available
         </span>
@@ -25,73 +19,62 @@
           🔓 {{ unlockedScenarios }} Unlocked
         </span>
       </div>
-    </div>
-  </div>
-
-  <!-- Search and Filters -->
-  <div class="search-container mb-5">
-    <div class="row g-3 justify-content-center">
       <div class="col-md-5">
         <div class="input-group">
           <span class="input-group-text" style="background-color: #2d2d2d; border-color: #444; color: white;">
             🔍
           </span>
-          <input 
-            type="text" 
-            class="form-control"
-            style="background-color: #2d2d2d; border-color: #444; color: white;"
-            placeholder="Search scenarios, descriptions, or categories..." 
-            [(ngModel)]="searchTerm" />
+          <input type="text" class="form-control" style="background-color: #2d2d2d; border-color: #444; color: white;"
+            placeholder="Search scenarios, descriptions, or categories..." [(ngModel)]="searchTerm" />
         </div>
       </div>
-      
+
       <div class="col-md-2">
-        <select class="form-select" [(ngModel)]="selectedCategory" 
-                style="background-color: #2d2d2d; border-color: #444; color: white;">
+        <select class="form-select" [(ngModel)]="selectedCategory"
+          style="background-color: #2d2d2d; border-color: #444; color: white;">
           <option value="">All Categories</option>
           <option *ngFor="let category of categories" [value]="category">
             {{ category }}
           </option>
         </select>
       </div>
-      
+
       <div class="col-md-2">
         <select class="form-select" [(ngModel)]="selectedLength"
-                style="background-color: #2d2d2d; border-color: #444; color: white;">
+          style="background-color: #2d2d2d; border-color: #444; color: white;">
           <option value="">All Lengths</option>
           <option *ngFor="let length of lengths" [value]="length">
             {{ length }}
           </option>
         </select>
       </div>
-      
+
       <div class="col-md-2">
         <select class="form-select" [(ngModel)]="selectedDifficulty"
-                style="background-color: #2d2d2d; border-color: #444; color: white;">
+          style="background-color: #2d2d2d; border-color: #444; color: white;">
           <option value="">All Difficulties</option>
           <option *ngFor="let diff of difficulties" [value]="diff">
             {{ diff }}
           </option>
         </select>
       </div>
-      
+
       <div class="col-md-1">
-        <button 
-          class="btn btn-outline-light w-100" 
-          (click)="clearFilters()"
-          title="Clear all filters">
+        <button class="btn btn-outline-light w-100" (click)="clearFilters()" title="Clear all filters">
           Search
         </button>
       </div>
     </div>
-    
+
     <!-- Results count -->
     <div class="text-center mt-3">
       <small class="text-muted">
         Showing {{ filteredScenarios().length || 0 }} of {{ totalScenarios }} scenarios
       </small>
     </div>
+
   </div>
+
 
   <!-- No Results Message -->
   <div *ngIf="!scenarios || scenarios.length === 0" class="text-center py-5">
@@ -114,88 +97,90 @@
   </div>
 
   <!-- Scenario Cards -->
-  <div class="row g-4" *ngIf="scenarios && scenarios.length > 0 && filteredScenarios().length > 0">
-    <div 
-      class="col-sm-6 col-md-4 col-lg-3" 
-      *ngFor="let scenario of filteredScenarios(); let i = index">
-      
-      <div 
-        class="scenario-card card h-100 shadow-lg rounded-4 overflow-hidden position-relative"
-        [class.locked-card]="scenario.locked"
-        (click)="onScenarioClick(scenario)"
-        [style.cursor]="scenario.locked ? 'not-allowed' : 'pointer'"
-        style="background-color: #2d2d2d; border-color: #444; transition: all 0.3s ease;">
-        
-        <!-- Lock Overlay -->
-        <div *ngIf="scenario.locked" class="lock-overlay position-absolute w-100 h-100 d-flex align-items-center justify-content-center"
-             style="background: rgba(0, 0, 0, 0.7); z-index: 10; top: 0; left: 0;">
-          <div class="lock-content text-center">
-            <div style="font-size: 3rem;">🔒</div>
-            <small class="text-light">Complete prerequisites</small>
-          </div>
+  <div class="row g-3" *ngIf="scenarios && scenarios.length > 0 && filteredScenarios().length > 0">
+    <div class="col-sm-6 col-md-4 col-lg-4" *ngFor="let scenario of filteredScenarios(); let i = index">
+
+      <div class="scenario-card card h-100 shadow-lg rounded-4 overflow-hidden position-relative"
+      [class.locked-card]="scenario.locked" (click)="onScenarioClick(scenario)"
+      [style.cursor]="scenario.locked ? 'not-allowed' : 'pointer'"
+      style="background-color: #2d2d2d; border-color: #444; transition: all 0.3s ease;">
+
+      <!-- Lock Overlay -->
+      <div *ngIf="scenario.locked"
+        class="lock-overlay position-absolute w-100 h-100 d-flex align-items-center justify-content-center"
+        style="background: rgba(0, 0, 0, 0.7); z-index: 10; top: 0; left: 0;">
+        <div class="lock-content text-center">
+        <div style="font-size: 3rem;">🔒</div>
+        <small class="text-light">Complete prerequisites</small>
         </div>
-        
-        <!-- Category Badge -->
-        <div class="position-absolute top-0 start-0 m-2" style="z-index: 2;">
-          <span class="badge bg-dark bg-opacity-75 px-2 py-1">
-            {{ scenario.category }}
-          </span>
+      </div>
+
+      <!-- Category Badge -->
+      <div class="position-absolute top-0 start-0 m-2" style="z-index: 2;">
+        <span class="badge bg-dark bg-opacity-75 px-2 py-1">
+        {{ scenario.category }}
+        </span>
+      </div>
+
+      <!-- Lock Icon -->
+      <div *ngIf="scenario.locked" class="position-absolute top-0 end-0 p-2" style="z-index: 2;">
+        <span style="font-size: 1.5rem;">🔒</span>
+      </div>
+
+      <!-- Image/Gradient Background -->
+      <div class="card-img-top d-flex align-items-center justify-content-center position-relative"
+        [style.background]="getScenarioImage(scenario)" style="height: 150px;">
+        <div class="position-absolute w-100 h-100 d-flex align-items-center justify-content-center"
+        style="background: rgba(0, 0, 0, 0.3);">
+        <span style="font-size: 3rem; opacity: 0.75;">🛡️</span>
+        </div>
+      </div>
+
+      <!-- Card Body -->
+      <div class="card-body d-flex flex-column p-4">
+        <h5 class="card-title fw-bold mb-2 text-light">
+        {{ scenario.title }}
+        </h5>
+
+        <!-- Star Rating -->
+        <div class="mb-2" *ngIf="scenario.stars">
+        <span *ngFor="let star of getStars(scenario.stars)" class="me-1">
+          <span *ngIf="star === 1" style="color: #ffc107;">⭐</span>
+          <span *ngIf="star === 0" style="color: #6c757d;">☆</span>
+        </span>
+        <small class="text-muted ms-2">({{ scenario.completedBy }} completed)</small>
         </div>
 
-        <!-- Lock Icon -->
-        <div *ngIf="scenario.locked" class="position-absolute top-0 end-0 p-2" style="z-index: 2;">
-          <span style="font-size: 1.5rem;">🔒</span>
-        </div>
+        <p class="card-text small text-muted flex-grow-1 mb-3">
 
-        <!-- Image/Gradient Background -->
-        <div 
-          class="card-img-top d-flex align-items-center justify-content-center position-relative"
-          [style.background]="getScenarioImage(scenario)"
-          style="height: 150px;">
-          <div class="position-absolute w-100 h-100 d-flex align-items-center justify-content-center"
-               style="background: rgba(0, 0, 0, 0.3);">
-            <span style="font-size: 3rem; opacity: 0.75;">🛡️</span>
-          </div>
-        </div>
+        <span style="
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          ">
+          {{ scenario.description }}
+        </span>
+        </p>
 
-        <!-- Card Body -->
-        <div class="card-body d-flex flex-column p-4">
-          <h5 class="card-title fw-bold mb-2 text-light">
-            {{ scenario.title }}
-          </h5>
-          
-          <!-- Star Rating -->
-          <div class="mb-2" *ngIf="scenario.stars">
-            <span *ngFor="let star of getStars(scenario.stars)" class="me-1">
-              <span *ngIf="star === 1" style="color: #ffc107;">⭐</span>
-              <span *ngIf="star === 0" style="color: #6c757d;">☆</span>
-            </span>
-            <small class="text-muted ms-2">({{ scenario.completedBy }} completed)</small>
-          </div>
-          
-          <p class="card-text small text-muted flex-grow-1 mb-3">
-            {{ scenario.description }}
-          </p>
-          
-          <!-- Badges -->
-          <div class="d-flex justify-content-between align-items-center mt-auto">
-            <span class="badge bg-secondary px-3 py-2">
-              ⏱️ {{ scenario.time }} mins
-            </span>
-            <span 
-              class="badge px-3 py-2" 
-              [ngClass]="getDifficultyBadgeClass(scenario.difficulty)">
-              {{ scenario.difficulty }}
-            </span>
-          </div>
+        <!-- Badges -->
+        <div class="d-flex justify-content-between align-items-center mt-auto">
+        <span class="badge bg-secondary px-3 py-2">
+          ⏱️ {{ scenario.time }} mins
+        </span>
+        <span class="badge px-3 py-2" [ngClass]="getDifficultyBadgeClass(scenario.difficulty)">
+          {{ scenario.difficulty }}
+        </span>
         </div>
-        
-        <!-- Progress indicator for locked scenarios -->
-        <div *ngIf="scenario.locked" class="card-footer bg-dark border-top-0 py-2">
-          <div class="progress" style="height: 3px;">
-            <div class="progress-bar bg-warning" style="width: 0%"></div>
-          </div>
+      </div>
+
+      <!-- Progress indicator for locked scenarios -->
+      <div *ngIf="scenario.locked" class="card-footer bg-dark border-top-0 py-2">
+        <div class="progress" style="height: 3px;">
+        <div class="progress-bar bg-warning" style="width: 0%"></div>
         </div>
+      </div>
       </div>
     </div>
   </div>
