@@ -237,3 +237,24 @@ footer.py-4.text-center.text-light[style*="background:#0f1419"] {
   .btn.btn-lg { padding: .6rem 1rem !important; font-size: 1rem !important; }
   .display-4 { font-size: 2rem !important; }
 }
+.feature-card {
+  background: #f8f9fa; /* light card color */
+  border-radius: 1rem;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 25px rgba(0,0,0,0.15);
+}
+
+.feature-card h5 {
+  margin-bottom: 0.5rem;
+}
+
+.feature-card p {
+  font-size: 0.95rem;
+  line-height: 1.5;
+}

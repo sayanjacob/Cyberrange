@@ -22,12 +22,11 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 # =========================
 # Configuration (env vars)
 # =========================
-# PRODUCTION CHANGES: Updated defaults for nginx deployment
-ALLOWED_ORIGINS = os.getenv(
-    "ALLOWED_ORIGINS", 
-    "http://20.197.40.109,http://localhost:4200,http://127.0.0.1:4200,*"
-).split(",")
 
+ALLOWED_ORIGINS = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://20.197.40.109,http://localhost:4200,http://127.0.0.1:4200,*",
+).split(",")
 
 SCRIPTS_ROOT = os.path.abspath(
     os.getenv("SCRIPTS_ROOT", os.path.join(os.path.dirname(__file__), "scripts"))
@@ -57,21 +56,15 @@ GUAC_USERS = {
 }
 
 GUAC_TOKEN_TIMEOUT = 3600
+FLASK_HOST = os.getenv("FLASK_HOST", "127.0.0.1")
 
-# PRODUCTION CHANGES: Updated for nginx deployment
-FLASK_HOST = os.getenv("FLASK_HOST", "127.0.0.1")  # Only bind to localhost
+
 FLASK_PORT = int(os.getenv("FLASK_PORT", "5000"))
-FLASK_DEBUG = os.getenv("FLASK_DEBUG", "false").lower() == "true"  # Default to false
+FLASK_DEBUG = os.getenv("FLASK_DEBUG", "true").lower() == "true"
 FLASK_USE_RELOADER = os.getenv("FLASK_USE_RELOADER", "false").lower() == "true"
 
 SESSION_TIMEOUT = 3600  # 1 hour
-# PRODUCTION CHANGES: Generate secure secret key
-SECRET_KEY = os.getenv("SECRET_KEY", os.urandom(32).hex())
-
-# PRODUCTION CHANGES: Add SSL/TLS configuration
-SSL_CONTEXT = None
-if os.getenv("SSL_CERT") and os.getenv("SSL_KEY"):
-    SSL_CONTEXT = (os.getenv("SSL_CERT"), os.getenv("SSL_KEY"))
+SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
 
 
 # =========================
@@ -101,36 +94,36 @@ def setup_logging():
     )
     simple_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 
-    # Console handler - PRODUCTION CHANGE: Less verbose in production
+    # Console handler
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.INFO)  # Always INFO or above for console
+    console_handler.setLevel(logging.DEBUG if FLASK_DEBUG else logging.INFO)
     console_handler.setFormatter(simple_formatter)
 
-    # PRODUCTION CHANGES: Always create file logs for production monitoring
-    app_file_handler = logging.FileHandler(os.path.join(log_dir, "app.log"))
-    app_file_handler.setLevel(logging.INFO)
-    app_file_handler.setFormatter(detailed_formatter)
+    # File handlers
+    if not FLASK_DEBUG:  # Only create file logs in production
+        app_file_handler = logging.FileHandler(os.path.join(log_dir, "app.log"))
+        app_file_handler.setLevel(logging.INFO)
+        app_file_handler.setFormatter(detailed_formatter)
 
-    security_file_handler = logging.FileHandler(os.path.join(log_dir, "security.log"))
-    security_file_handler.setLevel(logging.INFO)
-    security_file_handler.setFormatter(detailed_formatter)
+        security_file_handler = logging.FileHandler(
+            os.path.join(log_dir, "security.log")
+        )
+        security_file_handler.setLevel(logging.INFO)
+        security_file_handler.setFormatter(detailed_formatter)
 
-    perf_file_handler = logging.FileHandler(os.path.join(log_dir, "performance.log"))
-    perf_file_handler.setLevel(logging.INFO)
-    perf_file_handler.setFormatter(detailed_formatter)
+        perf_file_handler = logging.FileHandler(
+            os.path.join(log_dir, "performance.log")
+        )
+        perf_file_handler.setLevel(logging.INFO)
+        perf_file_handler.setFormatter(detailed_formatter)
 
-    # Add handlers to loggers
+        app_logger.addHandler(app_file_handler)
+        security_logger.addHandler(security_file_handler)
+        perf_logger.addHandler(perf_file_handler)
+
+    # Add console handlers
     for logger in [app_logger, security_logger, perf_logger]:
         logger.addHandler(console_handler)
-        logger.addHandler(
-            app_file_handler
-            if logger == app_logger
-            else (
-                security_file_handler
-                if logger == security_logger
-                else perf_file_handler
-            )
-        )
 
     return app_logger, security_logger, perf_logger
 
@@ -322,7 +315,9 @@ class SessionManager:
 session_manager = SessionManager()
 
 
-# [Keep all the existing Guacamole functions - they remain the same]
+# =========================
+# Enhanced Guacamole Functions
+# =========================
 @monitor_performance("get_guac_token")
 def get_guac_token(user_type: str, force_new: bool = False) -> Tuple[str, str, int]:
     """Get Guacamole authentication token with enhanced error handling and logging"""
@@ -516,16 +511,12 @@ def create_app() -> Flask:
     app = Flask(__name__)
     app.config["SECRET_KEY"] = SECRET_KEY
 
-    # PRODUCTION CHANGES: Enhanced security settings
     app.config["SESSION_COOKIE_HTTPONLY"] = True
-    app.config["SESSION_COOKIE_SECURE"] = False  # True in production
+    app.config["SESSION_COOKIE_SECURE"] = False  # Set to True in production with HTTPS
     app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(seconds=SESSION_TIMEOUT)
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
-    # PRODUCTION CHANGES: Improved proxy handling for nginx
-    app.wsgi_app = ProxyFix(
-        app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1  # nginx -> gunicorn
-    )
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     # Enhanced CORS configuration
     CORS(
@@ -542,8 +533,7 @@ def create_app() -> Flask:
         cors_allowed_origins=ALLOWED_ORIGINS,
         logger=FLASK_DEBUG,
         engineio_logger=FLASK_DEBUG,
-        async_mode="threading",
-        # PRODUCTION CHANGES: Additional socketio config for nginx
+        async_mode="threading",  # Explicit async mode
         ping_timeout=60,
         ping_interval=25,
     )
@@ -559,7 +549,7 @@ def create_app() -> Flask:
         else:
             session_manager.update_session_activity(session["session_id"])
 
-        # PRODUCTION CHANGES: Log real client IP through nginx
+        # Log request details
         client_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
         if FLASK_DEBUG:
             try:
@@ -577,7 +567,6 @@ def create_app() -> Flask:
 
     @app.after_request
     def after_request(response):
-        # PRODUCTION CHANGES: Add security headers
         if not FLASK_DEBUG:
             response.headers["X-Content-Type-Options"] = "nosniff"
             response.headers["X-Frame-Options"] = "DENY"
@@ -589,8 +578,618 @@ def create_app() -> Flask:
             )
         return response
 
-    # [Keep all existing API endpoints - they remain the same]
-    # ... [All the API endpoints from original code] ...
+    # =========================
+    # API Endpoints
+    # =========================
+
+    @app.get("/api/health")
+    @monitor_performance("health_check")
+    def health():
+        """Enhanced health check with system status"""
+        try:
+            # Basic connectivity test to Guacamole
+            guac_status = "unknown"
+            try:
+                response = requests.get(
+                    f"{GUAC_BASE}/api/languages", timeout=5, verify=False
+                )
+                guac_status = "healthy" if response.status_code == 200 else "unhealthy"
+            except Exception:
+                guac_status = "unreachable"
+
+            health_data = {
+                "ok": True,
+                "timestamp": datetime.now().isoformat(),
+                "session_id": session.get("session_id"),
+                "guac_base": GUAC_BASE,
+                "guac_status": guac_status,
+                "active_sessions": len(session_manager.active_sessions),
+                "total_active_connections": sum(
+                    len(s.get("active_connections", []))
+                    for s in session_manager.active_sessions.values()
+                ),
+                "version": "2.0.0",  # Add version tracking
+            }
+
+            app_logger.debug("Health check completed successfully")
+            return jsonify(health_data)
+
+        except Exception as e:
+            app_logger.error(f"Health check failed: {e}")
+            return (
+                jsonify(
+                    {
+                        "ok": False,
+                        "error": str(e),
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                ),
+                500,
+            )
+
+    @app.get("/api/status")
+    @monitor_performance("status_check")
+    def status():
+        """Enhanced status endpoint with detailed session info"""
+        try:
+            session_id = session.get("session_id")
+            session_data = session_manager.get_session(session_id)
+
+            # Validate all stored tokens
+            validated_users = {}
+            for user_type, config in GUAC_USERS.items():
+                token = session_manager.get_user_token(session_id, user_type)
+                token_valid = validate_guac_token(token) if token else False
+
+                validated_users[user_type] = {
+                    "username": config["username"],
+                    "display_name": config["display_name"],
+                    "description": config["description"],
+                    "color_theme": config["color_theme"],
+                    "connection_id": config["connection_id"],
+                    "has_active_token": token is not None,
+                    "token_valid": token_valid,
+                    "last_activity": (
+                        session_data.get("last_activity") if session_data else None
+                    ),
+                }
+
+            status_data = {
+                "session": session_data,
+                "guac_users": validated_users,
+                "system_info": {
+                    "flask_debug": FLASK_DEBUG,
+                    "session_timeout": SESSION_TIMEOUT,
+                    "scripts_root": SCRIPTS_ROOT,
+                },
+            }
+
+            app_logger.debug(f"Status check for session {session_id[:8]}...")
+            return jsonify(status_data)
+
+        except Exception as e:
+            app_logger.error(f"Status check failed: {e}")
+            return jsonify({"error": str(e)}), 500
+
+    @app.post("/api/guac/token/<user_type>")
+    @monitor_performance("get_token")
+    def get_token_for_user(user_type):
+        """Enhanced token endpoint with comprehensive validation"""
+        session_id = session.get("session_id")
+
+        if user_type not in GUAC_USERS:
+            app_logger.warning(f"Invalid user type requested: {user_type}")
+            return jsonify({"error": f"Invalid user type: {user_type}"}), 400
+
+        try:
+            app_logger.info(
+                f"Token requested for {user_type} in session {session_id[:8]}..."
+            )
+
+            # Get fresh token
+            token, ds, status = get_guac_token(user_type, force_new=True)
+            if status != 200:
+                return jsonify({"error": token}), status
+
+            # Resolve connection ID
+            conn_id = resolve_connection_id(user_type, token, ds)
+
+            # Generate connection URL
+            url = tokenized_connection_url(conn_id, token, ds)
+
+            # Store token in session
+            session_manager.store_user_token(session_id, user_type, token)
+
+            response_data = {
+                "ok": True,
+                "connection_url": url,
+                "user_type": user_type,
+                "connection_id": conn_id,
+                "data_source": ds,
+            }
+
+            app_logger.info(f"Token successfully generated for {user_type}")
+            return jsonify(response_data)
+
+        except Exception as e:
+            app_logger.error(f"Token generation failed for {user_type}: {e}")
+            return jsonify({"error": str(e)}), 500
+
+    @app.get("/api/guac/auto-login/<user_type>")
+    @monitor_performance("auto_login")
+    def guac_auto_login(user_type):
+        """Enhanced auto-login with better error handling and logging"""
+        session_id = session.get("session_id")
+
+        if user_type not in GUAC_USERS:
+            app_logger.warning(f"Invalid user type for auto-login: {user_type}")
+            return jsonify({"error": f"Invalid user type: {user_type}"}), 400
+
+        app_logger.info(
+            f"Auto-login requested for {user_type} in session {session_id[:8]}..."
+        )
+
+        try:
+            # Get fresh token for auto-login
+            token, ds, status_code = get_guac_token(user_type, force_new=True)
+            if status_code != 200:
+                error_html = self._generate_error_page(user_type, token)
+                return Response(error_html, mimetype="text/html", status=status_code)
+
+            # Store token and mark connection as active
+            session_manager.store_user_token(session_id, user_type, token)
+            session_manager.add_active_connection(session_id, user_type)
+
+            # Generate connection details
+            user_config = GUAC_USERS[user_type]
+            connection_id = resolve_connection_id(user_type, token, ds)
+            connection_url = tokenized_connection_url(connection_id, token, ds)
+
+            # Generate enhanced HTML page
+            html = _generate_connection_page(user_type, user_config, connection_url)
+
+            app_logger.info(f"Auto-login page generated for {user_type}")
+            return Response(html, mimetype="text/html")
+
+        except Exception as e:
+            app_logger.error(f"Auto-login failed for {user_type}: {e}")
+            error_html = _generate_error_page(user_type, str(e))
+            return Response(error_html, mimetype="text/html", status=500)
+
+    def _generate_error_page(user_type: str, error_message: str) -> str:
+        """Generate enhanced error page"""
+        return f"""<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Connection Failed - {user_type.title()}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #c0392b, #e74c3c);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }}
+        .error-card {{
+            background: rgba(255,255,255,0.95);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,.2);
+            max-width: 500px;
+            border-left: 6px solid #e74c3c;
+        }}
+        .error-icon {{ font-size: 48px; color: #e74c3c; margin-bottom: 20px; }}
+        .retry-btn {{
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }}
+        .retry-btn:hover {{ background: #c0392b; }}
+        .error-details {{ margin-top: 15px; font-size: 14px; color: #7f8c8d; }}
+    </style>
+</head>
+<body>
+    <div class="error-card">
+        <div class="error-icon">⚠️</div>
+        <h2>Connection Failed</h2>
+        <p><strong>Unable to connect to {user_type.title()} machine</strong></p>
+        <button class="retry-btn" onclick="location.reload()">Retry Connection</button>
+        <div class="error-details">
+            <details>
+                <summary>Technical Details</summary>
+                <p>{error_message}</p>
+            </details>
+        </div>
+    </div>
+    <script>
+        // Auto-retry after 5 seconds
+        setTimeout(() => {{
+            if (confirm('Connection failed. Would you like to retry automatically?')) {{
+                location.reload();
+            }}
+        }}, 5000);
+    </script>
+</body>
+</html>"""
+
+    def _generate_connection_page(
+        user_type: str, user_config: dict, connection_url: str
+    ) -> str:
+        """Generate enhanced connection page with better UX"""
+        return f"""<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Connecting to {user_config['display_name']}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, {user_config['color_theme']}, {user_config['color_theme']}88);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }}
+        .connection-card {{
+            background: rgba(255,255,255,0.95);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,.15);
+            border-left: 6px solid {user_config['color_theme']};
+            max-width: 450px;
+            min-width: 350px;
+        }}
+        .user-badge {{
+            display: inline-block;
+            background: {user_config['color_theme']};
+            color: white;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.85em;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }}
+        .status-text {{ 
+            color: #5a6c7d; 
+            font-size: 0.9em; 
+            margin: 20px 0;
+        }}
+        .loading-spinner {{
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid {user_config['color_theme']};
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }}
+        @keyframes spin {{
+            0% {{ transform: rotate(0deg); }}
+            100% {{ transform: rotate(360deg); }}
+        }}
+        .manual-link {{ 
+            margin-top: 25px; 
+            padding-top: 20px; 
+            border-top: 1px solid #ecf0f1; 
+            font-size: 0.85em; 
+        }}
+        .manual-link a {{ 
+            color: {user_config['color_theme']}; 
+            text-decoration: none; 
+            font-weight: 500; 
+            padding: 8px 16px;
+            border: 1px solid {user_config['color_theme']};
+            border-radius: 6px;
+            display: inline-block;
+            transition: all 0.3s;
+        }}
+        .manual-link a:hover {{ 
+            background: {user_config['color_theme']};
+            color: white;
+        }}
+        .connection-info {{
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 0.8em;
+            color: #6c757d;
+        }}
+    </style>
+</head>
+<body>
+    <div class="connection-card">
+        <div class="user-badge">{user_type.title()}</div>
+        <h2>{user_config['display_name']}</h2>
+        <div class="loading-spinner"></div>
+        <p class="status-text" id="statusText">Establishing secure connection...</p>
+        
+        <div class="connection-info">
+            <strong>Description:</strong> {user_config['description']}<br>
+            <strong>Status:</strong> <span id="connectionStatus">Connecting...</span>
+        </div>
+        
+        <div class="manual-link">
+            <a href="{connection_url}" target="_blank" rel="noopener" id="manualLink">
+                Open Connection Manually
+            </a>
+        </div>
+    </div>
+
+    <script>
+        (function() {{
+            const connectionUrl = "{connection_url}";
+            let attemptCount = 0;
+            const maxAttempts = 3;
+            
+            function updateStatus(message, isError = false) {{
+                const statusEl = document.getElementById('statusText');
+                const connectionStatusEl = document.getElementById('connectionStatus');
+                statusEl.textContent = message;
+                connectionStatusEl.textContent = isError ? 'Failed' : 'In Progress';
+                statusEl.style.color = isError ? '#e74c3c' : '#5a6c7d';
+            }}
+            
+            function attemptConnection() {{
+                attemptCount++;
+                updateStatus(`Attempting connection (${{attemptCount}}/${{maxAttempts}})...`);
+                
+                try {{ 
+                    // Try to redirect to the connection
+                    window.location.replace(connectionUrl); 
+                }}
+                catch(e) {{
+                    console.error('Redirect failed:', e);
+                    // Fallback: open in new window
+                    const newWindow = window.open(connectionUrl, "_blank", "noopener,noreferrer");
+                    if (newWindow) {{
+                        updateStatus("Connection opened in new tab.");
+                        document.getElementById('connectionStatus').textContent = 'Opened';
+                    }} else {{
+                        updateStatus("Pop-up blocked. Please use manual link.", true);
+                    }}
+                }}
+            }}
+            
+            // Initial connection attempt after delay
+            setTimeout(attemptConnection, 2000);
+            
+            // Add click handler for manual link
+            document.getElementById('manualLink').addEventListener('click', function(e) {{
+                e.preventDefault();
+                window.open(connectionUrl, '_blank', 'noopener,noreferrer');
+                updateStatus("Connection opened manually.");
+                document.getElementById('connectionStatus').textContent = 'Opened';
+            }});
+            
+            // Auto-retry logic with exponential backoff
+            let retryTimeout = 5000;
+            function scheduleRetry() {{
+                if (attemptCount < maxAttempts) {{
+                    setTimeout(() => {{
+                        retryTimeout *= 1.5; // Exponential backoff
+                        attemptConnection();
+                        scheduleRetry();
+                    }}, retryTimeout);
+                }} else {{
+                    updateStatus("Auto-connection attempts exhausted. Please use manual link.", true);
+                }}
+            }}
+            
+            // Only schedule retries if the page is still visible
+            if (!document.hidden) {{
+                setTimeout(scheduleRetry, 3000);
+            }}
+        }})();
+    </script>
+</body>
+</html>"""
+
+    @app.post("/api/guac/disconnect/<user_type>")
+    @monitor_performance("disconnect_user")
+    def disconnect_user(user_type):
+        """Enhanced disconnect endpoint with comprehensive cleanup"""
+        session_id = session.get("session_id")
+
+        if user_type not in GUAC_USERS:
+            app_logger.warning(f"Invalid user type for disconnect: {user_type}")
+            return jsonify({"error": f"Invalid user type: {user_type}"}), 400
+
+        try:
+            app_logger.info(
+                f"Disconnect requested for {user_type} in session {session_id[:8]}..."
+            )
+
+            # Remove active connection first
+            session_manager.remove_active_connection(session_id, user_type)
+
+            # Get and invalidate token
+            token = session_manager.get_user_token(session_id, user_type)
+            if token:
+                invalidate_guac_token(token)
+                session_manager.remove_user_token(session_id, user_type)
+                app_logger.info(f"Token invalidated for {user_type}")
+            else:
+                app_logger.info(f"No active token found for {user_type}")
+
+            # Emit socket event for real-time updates
+            socketio.emit(
+                "user_disconnected",
+                {
+                    "session_id": session_id,
+                    "user_type": user_type,
+                    "timestamp": datetime.now().isoformat(),
+                },
+                room=session_id,
+            )
+
+            response_data = {
+                "success": True,
+                "user_type": user_type,
+                "message": f"{user_type} disconnected successfully",
+                "timestamp": datetime.now().isoformat(),
+            }
+
+            app_logger.info(f"Successfully disconnected {user_type}")
+            security_logger.info(
+                f"USER_DISCONNECTED: session={session_id}, user_type={user_type}"
+            )
+
+            return jsonify(response_data)
+
+        except Exception as e:
+            app_logger.error(f"Disconnect failed for {user_type}: {e}")
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/guac/disconnect-all", methods=["POST", "DELETE", "OPTIONS"])
+    @monitor_performance("disconnect_all")
+    def disconnect_all():
+        """Enhanced disconnect-all with detailed results and cleanup"""
+        session_id = session.get("session_id")
+        results = {}
+        success_count = 0
+        error_count = 0
+
+        app_logger.info(f"Disconnect-all requested for session {session_id[:8]}...")
+
+        try:
+            for user_type in GUAC_USERS.keys():
+                try:
+                    token = session_manager.get_user_token(session_id, user_type)
+                    if token:
+                        # Validate token before attempting to invalidate
+                        if validate_guac_token(token):
+                            invalidate_guac_token(token)
+                            results[user_type] = "disconnected"
+                            success_count += 1
+                        else:
+                            results[user_type] = "token_already_invalid"
+                            success_count += 1
+                    else:
+                        results[user_type] = "no_active_token"
+                        success_count += 1
+
+                    # Clean up session data regardless
+                    session_manager.remove_user_token(session_id, user_type)
+                    session_manager.remove_active_connection(session_id, user_type)
+
+                except Exception as e:
+                    results[user_type] = f"error: {str(e)}"
+                    error_count += 1
+                    app_logger.error(f"Error disconnecting {user_type}: {e}")
+
+            # Emit socket event for all disconnections
+            socketio.emit(
+                "all_users_disconnected",
+                {
+                    "session_id": session_id,
+                    "results": results,
+                    "timestamp": datetime.now().isoformat(),
+                },
+                room=session_id,
+            )
+
+            response_data = {
+                "ok": True,
+                "results": results,
+                "summary": {
+                    "total_processed": len(GUAC_USERS),
+                    "successful": success_count,
+                    "errors": error_count,
+                },
+                "timestamp": datetime.now().isoformat(),
+            }
+
+            app_logger.info(
+                f"Disconnect-all completed: {success_count} successful, {error_count} errors"
+            )
+            security_logger.info(
+                f"ALL_USERS_DISCONNECTED: session={session_id}, success={success_count}, errors={error_count}"
+            )
+
+            return jsonify(response_data)
+
+        except Exception as e:
+            app_logger.error(f"Disconnect-all failed: {e}")
+            return jsonify({"error": str(e)}), 500
+
+    # =========================
+    # WebSocket Event Handlers
+    # =========================
+
+    @socketio.on("connect")
+    def handle_connect():
+        """Enhanced WebSocket connection handler"""
+        session_id = session.get("session_id")
+        if session_id:
+            join_room(session_id)
+            app_logger.info(f"WebSocket client connected to room {session_id[:8]}...")
+
+            # Send current session status
+            session_data = session_manager.get_session(session_id)
+            emit(
+                "session_status",
+                {
+                    "session_id": session_id,
+                    "active_connections": (
+                        session_data.get("active_connections", [])
+                        if session_data
+                        else []
+                    ),
+                    "timestamp": datetime.now().isoformat(),
+                },
+            )
+        else:
+            app_logger.warning("WebSocket connection without valid session")
+            emit("error", {"message": "No valid session"})
+
+    @socketio.on("disconnect")
+    def handle_disconnect():
+        """Enhanced WebSocket disconnection handler"""
+        session_id = session.get("session_id")
+        if session_id:
+            leave_room(session_id)
+            app_logger.info(
+                f"WebSocket client disconnected from room {session_id[:8]}..."
+            )
+
+    @socketio.on("ping")
+    def handle_ping():
+        """WebSocket ping/pong for connection health"""
+        emit("pong", {"timestamp": datetime.now().isoformat()})
+
+    # =========================
+    # Error Handlers
+    # =========================
+
+    @app.errorhandler(404)
+    def not_found(error):
+        app_logger.warning(f"404 error for {request.path}")
+        return jsonify({"error": "Resource not found"}), 404
+
+    @app.errorhandler(500)
+    def internal_error(error):
+        app_logger.error(f"500 error: {error}")
+        return jsonify({"error": "Internal server error"}), 500
+
+    @app.errorhandler(Exception)
+    def handle_exception(e):
+        app_logger.error(f"Unhandled exception: {e}", exc_info=True)
+        return jsonify({"error": "An unexpected error occurred"}), 500
 
     # Store socketio reference
     app.socketio = socketio
@@ -600,10 +1199,6 @@ def create_app() -> Flask:
 
     return app
 
-
-# =========================
-# PRODUCTION CHANGES: WSGI Entry Point
-# =========================
 def create_wsgi_app():
     """Create WSGI application for production deployment"""
     return create_app()
@@ -613,33 +1208,23 @@ def create_wsgi_app():
 # Application Entry Point
 # =========================
 def main():
-    """Enhanced main function with production considerations"""
+    """Enhanced main function with better startup logging"""
     try:
-        # PRODUCTION CHANGES: Environment validation
-        if not FLASK_DEBUG and SECRET_KEY == "your-secret-key-change-in-production":
-            app_logger.error("❌ SECRET_KEY must be set in production!")
-            sys.exit(1)
-
-        # Validate required environment variables
-        required_env_vars = []
-        if not FLASK_DEBUG:
-            required_env_vars.extend(["SECRET_KEY"])
-
-        missing_vars = [var for var in required_env_vars if not os.getenv(var)]
-        if missing_vars:
-            app_logger.error(
-                f"❌ Missing required environment variables: {missing_vars}"
+        # Validate environment
+        if SECRET_KEY == "your-secret-key-change-in-production":
+            app_logger.warning(
+                "⚠️  Using default SECRET_KEY - change this in production!"
             )
-            sys.exit(1)
+            security_logger.warning("DEFAULT_SECRET_KEY_IN_USE")
 
         # Create Flask app
         app = create_app()
 
-        # PRODUCTION CHANGES: Different startup info for production
+        # Startup information
         if FLASK_DEBUG:
             startup_info = f"""
-🔧 Cybersecurity Lab Management Server v2.0.0 [DEVELOPMENT]
-============================================================
+🔧 Cybersecurity Lab Management Server v2.0.0
+================================================
 🌐 Server: http://{FLASK_HOST}:{FLASK_PORT}
 🎯 Guacamole: {GUAC_BASE}
 📁 Scripts: {SCRIPTS_ROOT}
@@ -649,16 +1234,12 @@ def main():
 🐛 Debug Mode: {FLASK_DEBUG}
 📊 Performance Monitoring: Enabled
 🔐 Security Logging: Enabled
-============================================================
+================================================
 """
             print(startup_info)
             app_logger.info("Server starting in DEBUG mode")
         else:
-            app_logger.info(
-                f"Server starting in PRODUCTION mode on {FLASK_HOST}:{FLASK_PORT}"
-            )
-            app_logger.info(f"Guacamole backend: {GUAC_BASE}")
-            app_logger.info(f"Session timeout: {SESSION_TIMEOUT}s")
+            app_logger.info("Server starting in PRODUCTION mode")
 
         # Test Guacamole connectivity
         try:
@@ -674,12 +1255,6 @@ def main():
         except Exception as e:
             app_logger.error(f"❌ Guacamole connectivity test failed: {e}")
 
-        # PRODUCTION CHANGES: Production warning
-        if not FLASK_DEBUG:
-            app_logger.warning(
-                "🚀 Starting in production mode - use gunicorn for better performance"
-            )
-
         # Start the server
         security_logger.info("SERVER_STARTING")
         app.socketio.run(
@@ -688,7 +1263,6 @@ def main():
             port=FLASK_PORT,
             debug=FLASK_DEBUG,
             use_reloader=FLASK_USE_RELOADER,
-            ssl_context=SSL_CONTEXT,  # PRODUCTION CHANGE: SSL support
             allow_unsafe_werkzeug=True,
         )
 
@@ -700,8 +1274,6 @@ def main():
         security_logger.error(f"SERVER_STARTUP_ERROR: {e}")
         sys.exit(1)
 
-
-# PRODUCTION CHANGES: WSGI application instance for gunicorn
 application = create_wsgi_app()
 
 if __name__ == "__main__":
