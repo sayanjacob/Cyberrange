@@ -1,7 +1,7 @@
 <nav class="navbar">
   <div class="navbar-brand">
     <a class="navbar-item" style="font-size: 25px;" href="/">
-     <i class="bi bi-shield-shaded"></i> <span> &nbsp;</span> Cyber Range
+      <i class="bi bi-shield-shaded"></i> <span> &nbsp;</span> Cyber Range
     </a>
   </div>
   <div class="navbar-menu">
@@ -11,10 +11,11 @@
         <a class="button is-light" (click)="register()">Register</a>
       </div>
       <div *ngIf="isLoggedIn" class="navbar-item">
+        <p class="pe-3 " style="font-weight: 600;" (click)="home()">Home</p>
         <p class="pe-3">Hello, {{ username }}</p>
 
         <a class="button is-light" (click)="logout()">
-          Logout
+          <i class="bi bi-box-arrow-right"></i>
         </a>
       </div>
     </div>

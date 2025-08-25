@@ -10,7 +10,10 @@ import { Router } from '@angular/router';
   imports: [CommonModule]
 })
 export class NavbarComponent {
-  isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true'|| false;
+  home() {
+    this.router.navigate(['/home']);
+  }
+  isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true' || false;
   username = sessionStorage.getItem('username');
   constructor(private router: Router) { }
 

